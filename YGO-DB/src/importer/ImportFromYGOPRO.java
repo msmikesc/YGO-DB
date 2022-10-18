@@ -1,9 +1,8 @@
 package importer;
+
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.sql.Connection;
 import java.util.Iterator;
 import org.json.*;
 
@@ -11,10 +10,7 @@ import connection.SQLiteConnection;
 import connection.Util;
 
 import org.apache.commons.io.*;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Types;
 
 public class ImportFromYGOPRO {
 
@@ -46,7 +42,7 @@ public class ImportFromYGOPRO {
 
 			JSONObject current = (JSONObject) keyset.next();
 
-			SQLiteConnection.insertGameplayCardFromYGOPRO(current);
+			insertGameplayCardFromYGOPRO(current);
 
 			int cardID = current.getInt("id");
 			String name = current.getString("name");
@@ -64,13 +60,60 @@ public class ImportFromYGOPRO {
 			}
 
 			if (isSets) {
-				SQLiteConnection.insertCardSetsForOneCard(sets, setIteraor, name, cardID);
+				insertCardSetsForOneCard(sets, setIteraor, name, cardID);
 			}
 
 		}
 
 	}
 
-	
+	public static void insertGameplayCardFromYGOPRO(JSONObject current) throws SQLException {
+
+		int wikiID = Util.getIntOrNull(current, "id");
+		String name = Util.getStringOrNull(current, "name");
+		String type = Util.getStringOrNull(current, "type");
+		int passcode = Util.getIntOrNull(current, "id");// passcode
+		String desc = Util.getStringOrNull(current, "desc");
+		String attribute = Util.getStringOrNull(current, "attribute");
+		String race = Util.getStringOrNull(current, "race");
+		int linkval = Util.getIntOrNull(current, "linkval");
+		int level = Util.getIntOrNull(current, "level");
+		int scale = Util.getIntOrNull(current, "scale");
+		int atk = Util.getIntOrNull(current, "atk");
+		int def = Util.getIntOrNull(current, "def");
+		String archetype = Util.getStringOrNull(current, "archetype");
+
+		SQLiteConnection.replaceIntoGamePlayCard(wikiID, name, type, passcode, desc, attribute, race, linkval, level,
+				scale, atk, def, archetype);
+	}
+
+	public static void insertCardSetsForOneCard(JSONArray sets, Iterator<Object> setIteraor, String name, int wikiID)
+			throws SQLException {
+
+		for (int i = 0; i < sets.length(); i++) {
+
+			JSONObject currentSet = (JSONObject) setIteraor.next();
+
+			String set_code = null;
+			String set_name = null;
+			String set_rarity = null;
+			String set_price = null;
+
+			try {
+				set_code = currentSet.getString("set_code");
+				set_name = currentSet.getString("set_name");
+				set_rarity = currentSet.getString("set_rarity");
+				set_price = currentSet.getString("set_price");
+			} catch (Exception e) {
+				System.out.println("issue found on " + name);
+				continue;
+			}
+
+			set_price = Util.getAdjustedPriceFromRarity(set_rarity, set_price);
+
+			SQLiteConnection.replaceIntoCardSet(set_code, set_rarity, set_name, wikiID, set_price);
+
+		}
+	}
 
 }

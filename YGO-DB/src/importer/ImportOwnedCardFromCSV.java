@@ -1,4 +1,5 @@
 package importer;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
@@ -16,8 +17,8 @@ public class ImportOwnedCardFromCSV {
 
 	public void run() throws SQLException, IOException {
 
-		Iterator<CSVRecord> it = CsvConnection.getIterator("C:\\Users\\Mike\\Documents\\GitHub\\YGO-DB\\YGO-DB\\csv\\all-folders.csv",
-				StandardCharsets.UTF_16LE);
+		Iterator<CSVRecord> it = CsvConnection.getIterator(
+				"C:\\Users\\Mike\\Documents\\GitHub\\YGO-DB\\YGO-DB\\csv\\all-folders.csv", StandardCharsets.UTF_16LE);
 
 		while (it.hasNext()) {
 
@@ -28,7 +29,5 @@ public class ImportOwnedCardFromCSV {
 		}
 
 	}
-
-	
 
 }

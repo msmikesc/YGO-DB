@@ -2,13 +2,9 @@ package connection;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Scanner;
-
-import org.json.JSONArray;
+import java.util.HashMap;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -23,78 +19,41 @@ public class Util {
 	public static BigDecimal ten = new BigDecimal(10);
 	public static BigDecimal thirty = new BigDecimal(30);
 	public static BigDecimal oneCent = new BigDecimal(0.01);
-	
+
 	public static void checkSetCounts() throws SQLException {
 		ArrayList<SetMetaData> list = SQLiteConnection.getSetMetaDataFromSetData();
-		
-		for(SetMetaData setData:list) {
+
+		for (SetMetaData setData : list) {
 			int countCardsinList = SQLiteConnection.getCountDistinctCardsInSet(setData.set_name);
-			
-			if(countCardsinList != setData.num_of_cards) {
-				System.out.println("Issue for " + setData.set_name + " metadata:" + setData.num_of_cards + " count:" + countCardsinList);
+
+			if (countCardsinList != setData.num_of_cards) {
+				System.out.println("Issue for " + setData.set_name + " metadata:" + setData.num_of_cards + " count:"
+						+ countCardsinList);
 			}
 		}
-	}
-	
-	public static void updateDBWithSetsFromAPI(String setName) {
-		String setAPI = "https://db.ygoprodeck.com/api/v7/cardsets.php";
-		
-		boolean specificSet =true;
-		
-		if(setName == null || setName.isBlank()) {
-			specificSet = false;
+
+		HashMap<String, SetMetaData> SetMetaDataMap = new HashMap<String, SetMetaData>();
+
+		for (SetMetaData s : list) {
+			SetMetaDataMap.put(s.set_name, s);
 		}
 
-		try {
-			URL url = new URL(setAPI);
+		ArrayList<String> setNames = SQLiteConnection.getDistinctSetNames();
 
-			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-			conn.setRequestMethod("GET");
-			conn.connect();
+		for (String setName : setNames) {
+			SetMetaData meta = SetMetaDataMap.get(setName);
 
-			// Getting the response code
-			int responsecode = conn.getResponseCode();
-
-			if (responsecode != 200) {
-				throw new RuntimeException("HttpResponseCode: " + responsecode);
-			} else {
-
-				String inline = "";
-				Scanner scanner = new Scanner(url.openStream());
-
-				// Write all the JSON data into a string using a scanner
-				while (scanner.hasNext()) {
-					inline += scanner.nextLine();
-				}
-
-				// Close the scanner
-				scanner.close();
-
-				JSONArray array = new JSONArray(inline);
-
-				inline = null;
-
-				for (Object setObject : array) {
-					JSONObject set = (JSONObject) setObject;
-
-					String set_name = Util.getStringOrNull(set, "set_name");
-					String set_code = Util.getStringOrNull(set, "set_code");
-					int num_of_cards = Util.getIntOrNull(set, "num_of_cards");
-					String tcg_date = Util.getStringOrNull(set, "tcg_date");
-					
-					if(!specificSet) {
-						SQLiteConnection.insertCardSet(set_name, set_code, num_of_cards, tcg_date);
-					}
-					if(specificSet && set_name.equalsIgnoreCase(setName)) {
-						SQLiteConnection.insertCardSet(set_name, set_code, num_of_cards, tcg_date);
-						return;
-					}
-				}
-
+			if (meta == null) {
+				System.out.println("Issue for " + setName + " no metadata");
+				continue;
 			}
 
-		} catch (Exception e) {
-			e.printStackTrace();
+			int cardsInSet = SQLiteConnection.getCountDistinctCardsInSet(setName);
+
+			if (cardsInSet != meta.num_of_cards) {
+				System.out.println("Issue for " + setName + " metadata:" + meta.num_of_cards + " count:" + cardsInSet);
+			}
+
 		}
 
 	}
@@ -232,7 +191,7 @@ public class Util {
 		return price.toString();
 
 	}
-	
+
 	public static void checkForIssuesWithSet(String setName) throws SQLException {
 
 		ArrayList<String> cardsInSetList = SQLiteConnection.getSortedCardsInSetByName(setName);
@@ -309,7 +268,7 @@ public class Util {
 			return null;
 		}
 	}
-	
+
 	public static Integer getIntOrNull(JSONObject current, String id) {
 		try {
 			int value = current.getInt(id);
@@ -319,6 +278,4 @@ public class Util {
 		}
 	}
 
-	
-	
 }

@@ -5,15 +5,8 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import bean.CardSet;
 import bean.SetMetaData;
 
@@ -227,48 +220,7 @@ public class SQLiteConnection {
 		return setsList;
 	}
 
-	public static void insertCardSetsForOneCard(JSONArray sets, Iterator<Object> setIteraor, String name, int wikiID)
-			throws SQLException {
-
-		Connection connection = SQLiteConnection.getInstance();
-
-		String cardSets = "Replace into cardSets(wikiID,setNumber,setName,setRarity,setPrice) values(?,?,?,?,?)";
-
-		for (int i = 0; i < sets.length(); i++) {
-			PreparedStatement statementInsertSets = connection.prepareStatement(cardSets);
-
-			JSONObject currentSet = (JSONObject) setIteraor.next();
-
-			String set_code = null;
-			String set_name = null;
-			String set_rarity = null;
-			String set_price = null;
-
-			try {
-				set_code = currentSet.getString("set_code");
-				set_name = currentSet.getString("set_name");
-				set_rarity = currentSet.getString("set_rarity");
-				set_price = currentSet.getString("set_price");
-			} catch (Exception e) {
-				System.out.println("issue found on " + name);
-				continue;
-			}
-
-			set_price = Util.getAdjustedPriceFromRarity(set_rarity, set_price);
-
-			statementInsertSets.setInt(1, wikiID);
-			statementInsertSets.setString(2, set_code);
-			statementInsertSets.setString(3, set_name);
-			statementInsertSets.setString(4, set_rarity);
-			statementInsertSets.setString(5, set_price);
-
-			statementInsertSets.execute();
-
-			statementInsertSets.close();
-		}
-	}
-
-	public static void insertCardSet(String set_name, String set_code, int num_of_cards, String tcg_date)
+	public static void replaceIntoCardSetMetaData(String set_name, String set_code, int num_of_cards, String tcg_date)
 			throws SQLException {
 
 		Connection connection = SQLiteConnection.getInstance();
@@ -288,59 +240,98 @@ public class SQLiteConnection {
 
 	}
 
-	public static void insertGameplayCardFromYGOPRO(JSONObject current) throws SQLException {
-
+	public static void replaceIntoGamePlayCard(int wikiID, String name, String type, int passcode, String desc,
+			String attribute, String race, int linkval, int level, int scale, int atk, int def, String archetype)
+			throws SQLException {
 		Connection connection = SQLiteConnection.getInstance();
 
 		String gamePlayCard = "Replace into gamePlayCard(wikiID,title,type,passcode,lore,attribute,race,linkValue,level,pendScale,atk,def,archetype) values(?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 		PreparedStatement statementgamePlayCard = connection.prepareStatement(gamePlayCard);
 
-		int cardID = current.getInt("id");
-
-		statementgamePlayCard.setInt(1, cardID);
-
-		setStringOrNull(statementgamePlayCard, 2, current, "name");
-		setStringOrNull(statementgamePlayCard, 3, current, "type");
-		setIntOrNull(statementgamePlayCard, 4, current, "id");// passcode
-		setStringOrNull(statementgamePlayCard, 5, current, "desc");
-		setStringOrNull(statementgamePlayCard, 6, current, "attribute");
-		setStringOrNull(statementgamePlayCard, 7, current, "race");
-		setIntOrNull(statementgamePlayCard, 8, current, "linkval");
-		setIntOrNull(statementgamePlayCard, 9, current, "level");
-		setIntOrNull(statementgamePlayCard, 10, current, "scale");
-		setIntOrNull(statementgamePlayCard, 11, current, "atk");
-		setIntOrNull(statementgamePlayCard, 12, current, "def");
-		setStringOrNull(statementgamePlayCard, 13, current, "archetype");
+		statementgamePlayCard.setInt(1, wikiID);
+		statementgamePlayCard.setString(2, name);
+		statementgamePlayCard.setString(3, type);
+		statementgamePlayCard.setInt(4, passcode);
+		statementgamePlayCard.setString(5, desc);
+		statementgamePlayCard.setString(6, attribute);
+		statementgamePlayCard.setString(7, race);
+		statementgamePlayCard.setInt(8, linkval);
+		statementgamePlayCard.setInt(9, level);
+		statementgamePlayCard.setInt(10, scale);
+		statementgamePlayCard.setInt(11, atk);
+		statementgamePlayCard.setInt(12, def);
+		statementgamePlayCard.setString(13, archetype);
 
 		statementgamePlayCard.execute();
 
 		statementgamePlayCard.close();
 	}
 
-	static private void setStringOrNull(PreparedStatement s, int index, JSONObject current, String id)
-			throws SQLException {
+	public static void upsertOwnedCard(String folder, String name, String quantity, String setCode, String condition,
+			String printing, String priceBought, String dateBought, CardSet setIdentified) throws SQLException {
 
-		String value = null;
+		Connection connection = SQLiteConnection.getInstance();
 
-		try {
-			value = current.getString(id);
-			s.setString(index, value);
-		} catch (JSONException e) {
-			s.setNull(index, Types.VARCHAR);
+		if (setIdentified.rarityUnsure != 1) {
+			setIdentified.rarityUnsure = 0;
 		}
+
+		if (setIdentified.colorVariant == null) {
+			setIdentified.colorVariant = "-1";
+		}
+
+		String ownedInsert = "insert into ownedCards(wikiID,folderName,cardName,quantity,setCode,"
+				+ "setNumber,setName,setRarity,setRarityColorVariant,condition,editionPrinting,dateBought"
+				+ ",priceBought,rarityUnsure, creationDate, modificationDate) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,"
+				+ "datetime('now','localtime'),datetime('now','localtime'))"
+				+ "on conflict (wikiID,folderName,setNumber,setRarity,setRarityColorVariant,"
+				+ "condition,editionPrinting,dateBought,priceBought) "
+				+ "do update set quantity = ?, rarityUnsure = ?, modificationDate = datetime('now','localtime')";
+
+		PreparedStatement statementOwnedCard = connection.prepareStatement(ownedInsert);
+
+		int cardID = setIdentified.id;
+
+		statementOwnedCard.setInt(1, cardID);
+		statementOwnedCard.setString(2, folder);
+		statementOwnedCard.setString(3, name);
+		statementOwnedCard.setInt(4, new Integer(quantity));
+		statementOwnedCard.setString(5, setCode);
+		statementOwnedCard.setString(6, setIdentified.setNumber);
+		statementOwnedCard.setString(7, setIdentified.setName);
+		statementOwnedCard.setString(8, setIdentified.setRarity);
+		statementOwnedCard.setString(9, setIdentified.colorVariant);
+		statementOwnedCard.setString(10, condition);
+		statementOwnedCard.setString(11, printing);
+		statementOwnedCard.setString(12, dateBought);
+		statementOwnedCard.setString(13, priceBought);
+		statementOwnedCard.setInt(14, setIdentified.rarityUnsure);
+		statementOwnedCard.setInt(15, new Integer(quantity));
+		statementOwnedCard.setInt(16, setIdentified.rarityUnsure);
+
+		statementOwnedCard.execute();
+
+		statementOwnedCard.close();
 	}
 
-	static private void setIntOrNull(PreparedStatement s, int index, JSONObject current, String id)
+	public static void replaceIntoCardSet(String cardNumber, String rarity, String setName, int wikiID, String price)
 			throws SQLException {
 
-		int value;
+		Connection connection = SQLiteConnection.getInstance();
 
-		try {
-			value = current.getInt(id);
-			s.setInt(index, value);
-		} catch (JSONException e) {
-			s.setNull(index, Types.INTEGER);
-		}
+		String setInsert = "replace into cardSets(wikiID,setNumber,setName,setRarity,setPrice) values(?,?,?,?,?)";
+
+		PreparedStatement statementSetInsert = connection.prepareStatement(setInsert);
+
+		statementSetInsert.setInt(1, wikiID);
+		statementSetInsert.setString(2, cardNumber);
+		statementSetInsert.setString(3, setName);
+		statementSetInsert.setString(4, rarity);
+		statementSetInsert.setString(5, price);
+
+		statementSetInsert.execute();
+		statementSetInsert.close();
 	}
+
 }
