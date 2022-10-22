@@ -7,12 +7,14 @@ import java.util.Iterator;
 
 import org.apache.commons.csv.CSVRecord;
 import connection.CsvConnection;
+import connection.SQLiteConnection;
 
 public class ImportCardSetFromCSV {
 
 	public static void main(String[] args) throws SQLException, IOException {
 		ImportCardSetFromCSV mainObj = new ImportCardSetFromCSV();
 		mainObj.run();
+		SQLiteConnection.closeInstance();
 	}
 
 	public void run() throws SQLException, IOException {

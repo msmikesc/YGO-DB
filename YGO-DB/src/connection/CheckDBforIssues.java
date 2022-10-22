@@ -11,6 +11,7 @@ public class CheckDBforIssues {
 	public static void main(String[] args) throws SQLException, IOException {
 		CheckDBforIssues mainObj = new CheckDBforIssues();
 		mainObj.run();
+		SQLiteConnection.closeInstance();
 	}
 
 	public void run() throws SQLException, IOException {

@@ -17,6 +17,7 @@ public class ImportFromYGOPRO {
 	public static void main(String[] args) throws SQLException, IOException {
 		ImportFromYGOPRO mainObj = new ImportFromYGOPRO();
 		mainObj.run();
+		SQLiteConnection.closeInstance();
 	}
 
 	public void run() throws SQLException, IOException {

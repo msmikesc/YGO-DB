@@ -7,17 +7,19 @@ import java.util.Iterator;
 
 import org.apache.commons.csv.CSVRecord;
 import connection.CsvConnection;
+import connection.SQLiteConnection;
 
 public class ImportOwnedCardFromCSV {
 
 	public static void main(String[] args) throws SQLException, IOException {
 		ImportOwnedCardFromCSV mainObj = new ImportOwnedCardFromCSV();
 		mainObj.run();
+		SQLiteConnection.closeInstance();
 	}
 
 	public void run() throws SQLException, IOException {
 
-		Iterator<CSVRecord> it = CsvConnection.getIterator(
+		Iterator<CSVRecord> it = CsvConnection.getIteratorSkipFirstLine(
 				"C:\\Users\\Mike\\Documents\\GitHub\\YGO-DB\\YGO-DB\\csv\\all-folders.csv", StandardCharsets.UTF_16LE);
 
 		while (it.hasNext()) {

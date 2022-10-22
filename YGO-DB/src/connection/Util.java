@@ -10,6 +10,7 @@ import org.json.JSONObject;
 
 import bean.CardSet;
 import bean.SetMetaData;
+import bean.Rarity;
 
 public class Util {
 
@@ -58,17 +59,17 @@ public class Util {
 
 	}
 
-	public static CardSet findRarity(String cardNumber, String priceBought, String dateBought, String folderName,
+	public static CardSet findRarity(String priceBought, String dateBought, String folderName,
 			String condition, String editionPrinting, String setNumber, String setName, String cardName)
 			throws SQLException {
 
-		ArrayList<CardSet> setRarities = SQLiteConnection.getRaritiesOfCardInSet(cardNumber);
+		ArrayList<CardSet> setRarities = SQLiteConnection.getRaritiesOfCardInSet(setNumber);
 
 		if (setRarities.size() == 0) {
 			// try removing color code
 
-			String newSetNumber = cardNumber.substring(0, cardNumber.length() - 1);
-			String colorcode = cardNumber.substring(cardNumber.length() - 1, cardNumber.length());
+			String newSetNumber = setNumber.substring(0, setNumber.length() - 1);
+			String colorcode = setNumber.substring(setNumber.length() - 1, setNumber.length());
 
 			setRarities = SQLiteConnection.getRaritiesOfCardInSet(newSetNumber);
 
@@ -85,7 +86,7 @@ public class Util {
 			return match;
 		}
 
-		ArrayList<CardSet> ownedRarities = SQLiteConnection.getExistingOwnedRaritesForCard(cardNumber, priceBought,
+		ArrayList<CardSet> ownedRarities = SQLiteConnection.getExistingOwnedRaritesForCard(setNumber, priceBought,
 				dateBought, folderName, condition, editionPrinting);
 
 		if (ownedRarities.size() == 1) {
@@ -94,7 +95,7 @@ public class Util {
 
 		// if we haven't found any at all give up
 		if (setRarities.size() == 0) {
-			System.out.println("Unable to find anything for " + cardNumber);
+			System.out.println("Unable to find anything for " + setNumber);
 			CardSet setIdentified = new CardSet();
 
 			setIdentified.setName = setName;
@@ -107,6 +108,34 @@ public class Util {
 			setIdentified.id = SQLiteConnection.getCardIdFromTitle(cardName);
 
 			return setIdentified;
+		}
+
+		// assume NOT starlight, ultimate, or collectors
+		if (setRarities.size() == 2) {
+			for (int i = 0; i < 2; i++) {
+				String name = setRarities.get(i).setRarity;
+				if (name.equals((Rarity.StarlightRare.toString())) || name.equals((Rarity.UltimateRare.toString()))
+						|| name.equals((Rarity.CollectorsRare.toString()))) {
+					if (i == 0) {
+						CardSet match = setRarities.get(1);
+
+						match.rarityUnsure = 0;
+
+						System.out.println("Took a guess that " + setNumber + ":" + cardName + " is:" + match.setRarity);
+
+						return match;
+					}
+					if (i == 1) {
+						CardSet match = setRarities.get(0);
+
+						match.rarityUnsure = 0;
+
+						System.out.println("Took a guess that " + setNumber + ":" + cardName + " is:" + match.setRarity);
+
+						return match;
+					}
+				}
+			}
 		}
 
 		// try closest price
@@ -124,7 +153,7 @@ public class Util {
 		CardSet rValue = setRarities.get(idx);
 		rValue.rarityUnsure = 1;
 
-		System.out.println("Took a guess that " + cardNumber + " is:" + rValue.setRarity);
+		System.out.println("Took a guess that " + setNumber + ":" + cardName + " is:" + rValue.setRarity);
 
 		return rValue;
 
@@ -186,7 +215,7 @@ public class Util {
 			price = price.add(two);
 		}
 
-		price = price.setScale(2, RoundingMode.CEILING);
+		price = price.setScale(2, RoundingMode.HALF_UP);
 
 		return price.toString();
 

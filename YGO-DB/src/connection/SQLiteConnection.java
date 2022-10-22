@@ -1,5 +1,7 @@
 package connection;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -8,6 +10,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import bean.CardSet;
+import bean.OwnedCard;
 import bean.SetMetaData;
 
 public class SQLiteConnection {
@@ -21,6 +24,16 @@ public class SQLiteConnection {
 		}
 
 		return connection;
+	}
+	
+	public static void closeInstance() throws SQLException {
+		if (connection == null) {
+			return;
+		}
+		
+		connection.close();
+		
+		connection = null;
 	}
 
 	public static ArrayList<CardSet> getExistingOwnedRaritesForCard(String cardNumber, String priceBought,
@@ -89,6 +102,96 @@ public class SQLiteConnection {
 
 		return setRarities;
 	}
+	
+	public static ArrayList<CardSet> getAllRaritiesOfCardByID(int id) throws SQLException {
+
+		Connection connection = SQLiteConnection.getInstance();
+
+		String setQuery = "Select * from cardSets where wikiID=?";
+
+		PreparedStatement statementSetQuery = connection.prepareStatement(setQuery);
+		statementSetQuery.setInt(1, id);
+
+		ResultSet rarities = statementSetQuery.executeQuery();
+
+		ArrayList<CardSet> setRarities = new ArrayList<CardSet>();
+
+		while (rarities.next()) {
+			CardSet set = new CardSet();
+			set.id = rarities.getInt("wikiID");
+			set.setNumber = rarities.getString("setNumber");
+			set.setName = rarities.getString("setName");
+			set.setRarity = rarities.getString("setRarity");
+			set.setPrice = rarities.getString("setPrice");
+
+			setRarities.add(set);
+		}
+
+		statementSetQuery.close();
+		rarities.close();
+
+		return setRarities;
+	}
+	
+	public static ArrayList<CardSet> getRaritiesOfCardInSetByID(int id, String setName) throws SQLException {
+
+		Connection connection = SQLiteConnection.getInstance();
+
+		String setQuery = "Select * from cardSets where wikiID=? and setName = ?";
+
+		PreparedStatement statementSetQuery = connection.prepareStatement(setQuery);
+		statementSetQuery.setInt(1, id);
+		statementSetQuery.setString(2, setName);
+
+		ResultSet rarities = statementSetQuery.executeQuery();
+
+		ArrayList<CardSet> setRarities = new ArrayList<CardSet>();
+
+		while (rarities.next()) {
+			CardSet set = new CardSet();
+			set.id = rarities.getInt("wikiID");
+			set.setNumber = rarities.getString("setNumber");
+			set.setName = rarities.getString("setName");
+			set.setRarity = rarities.getString("setRarity");
+			set.setPrice = rarities.getString("setPrice");
+
+			setRarities.add(set);
+		}
+
+		statementSetQuery.close();
+		rarities.close();
+
+		return setRarities;
+	}
+	
+	public static String getCardTitleFromID(int wikiID) throws SQLException {
+
+		Connection connection = SQLiteConnection.getInstance();
+
+		String setQuery = "Select * from gamePlayCard where wikiID=?";
+
+		PreparedStatement statementSetQuery = connection.prepareStatement(setQuery);
+		statementSetQuery.setInt(1, wikiID);
+
+		ResultSet rarities = statementSetQuery.executeQuery();
+
+		ArrayList<String> titlesFound = new ArrayList<String>();
+
+		while (rarities.next()) {
+
+			titlesFound.add(rarities.getString("title"));
+
+		}
+
+		statementSetQuery.close();
+		rarities.close();
+
+		if (titlesFound.size() == 1) {
+			return titlesFound.get(0);
+		}
+
+		return null;
+	}
 
 	public static int getCardIdFromTitle(String title) throws SQLException {
 
@@ -119,6 +222,102 @@ public class SQLiteConnection {
 		}
 
 		return id;
+	}
+	
+	public static ArrayList<OwnedCard> getNumberOfOwnedCardsById(int id) throws SQLException {
+		Connection connection = SQLiteConnection.getInstance();
+
+		String setQuery = "select sum(quantity), cardName from ownedCards where wikiID = ? group by cardName";
+
+		PreparedStatement setQueryStatement = connection.prepareStatement(setQuery);
+
+		setQueryStatement.setInt(1, id);
+
+		ResultSet rs = setQueryStatement.executeQuery();
+
+		ArrayList<OwnedCard> cardsInSetList = new ArrayList<OwnedCard>();
+
+		while (rs.next()) {
+			
+			OwnedCard current = new OwnedCard();
+			
+			current.id = id;
+			current.quantity = rs.getInt(1);
+			current.cardName = rs.getString(2);
+			
+			cardsInSetList.add(current);
+		}
+
+		rs.close();
+		setQueryStatement.close();
+
+		return cardsInSetList;
+	}
+	
+	public static ArrayList<OwnedCard> getRarityUnsureOwnedCards() throws SQLException {
+		Connection connection = SQLiteConnection.getInstance();
+
+		String setQuery = "select * from ownedCards where rarityUnsure = 1 order by setName";
+
+		PreparedStatement setQueryStatement = connection.prepareStatement(setQuery);
+
+		ResultSet rs = setQueryStatement.executeQuery();
+
+		ArrayList<OwnedCard> cardsInSetList = new ArrayList<OwnedCard>();
+
+		while (rs.next()) {
+			
+			OwnedCard current = new OwnedCard();
+			
+			current.id = rs.getInt("wikiID");
+			current.rarityUnsure =rs.getInt("rarityUnsure");
+			current.quantity = rs.getInt("quantity");
+			current.cardName = rs.getString("cardName");
+			current.setCode = rs.getString("setCode");
+			current.setNumber = rs.getString("setNumber");
+			current.setName = rs.getString("setName");
+			current.setRarity = rs.getString("setRarity");
+			current.colorVariant = rs.getString("setRarityColorVariant");
+			current.folderName = rs.getString("folderName");
+			current.condition = rs.getString("condition");
+			current.editionPrinting = rs.getString("editionPrinting");
+			current.dateBought = rs.getString("dateBought");
+			current.priceBought = rs.getString("priceBought");
+			current.creationDate = rs.getString("creationDate");
+			current.modificationDate = rs.getString("modificationDate");
+			
+			
+			cardsInSetList.add(current);
+		}
+
+		rs.close();
+		setQueryStatement.close();
+
+		return cardsInSetList;
+	}
+	
+	public static ArrayList<Integer> getDistinctCardIDsInSetByName(String setName) throws SQLException {
+		Connection connection = SQLiteConnection.getInstance();
+
+		String setQuery = "select distinct wikiID from cardSets where setName = ?";
+
+		PreparedStatement setQueryStatement = connection.prepareStatement(setQuery);
+
+		setQueryStatement.setString(1, setName);
+
+		ResultSet rs = setQueryStatement.executeQuery();
+
+		ArrayList<Integer> cardsInSetList = new ArrayList<Integer>();
+
+		while (rs.next()) {
+			
+			cardsInSetList.add(rs.getInt(1));
+		}
+
+		rs.close();
+		setQueryStatement.close();
+
+		return cardsInSetList;
 	}
 
 	public static ArrayList<String> getSortedCardsInSetByName(String setName) throws SQLException {
@@ -189,6 +388,37 @@ public class SQLiteConnection {
 		distrinctQueryStatement.close();
 
 		return results;
+	}
+	
+	public static ArrayList<SetMetaData> getSetMetaDataFromSetCode(String setCode) throws SQLException {
+
+		Connection connection = SQLiteConnection.getInstance();
+
+		String distrinctQuery = "select setName,setCode,numOfCards,releaseDate  from setData where setCode = ?";
+
+		PreparedStatement distrinctQueryStatement = connection.prepareStatement(distrinctQuery);
+		
+		distrinctQueryStatement.setString(1, setCode);
+
+		ResultSet rs = distrinctQueryStatement.executeQuery();
+
+		ArrayList<SetMetaData> setsList = new ArrayList<SetMetaData>();
+
+		while (rs.next()) {
+
+			SetMetaData current = new SetMetaData();
+			current.set_name = rs.getString(1);
+			current.set_code = rs.getString(2);
+			current.num_of_cards = rs.getInt(3);
+			current.tcg_date = rs.getString(4);
+
+			setsList.add(current);
+		}
+
+		rs.close();
+		distrinctQueryStatement.close();
+
+		return setsList;
 	}
 
 	public static ArrayList<SetMetaData> getSetMetaDataFromSetData() throws SQLException {
@@ -280,12 +510,18 @@ public class SQLiteConnection {
 		if (setIdentified.colorVariant == null) {
 			setIdentified.colorVariant = "-1";
 		}
+		
+		BigDecimal price = new BigDecimal(priceBought);
+		
+		price = price.setScale(2, RoundingMode.HALF_UP);
+		
+		String normalizedPrice = price.toString();
 
 		String ownedInsert = "insert into ownedCards(wikiID,folderName,cardName,quantity,setCode,"
 				+ "setNumber,setName,setRarity,setRarityColorVariant,condition,editionPrinting,dateBought"
 				+ ",priceBought,rarityUnsure, creationDate, modificationDate) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,"
 				+ "datetime('now','localtime'),datetime('now','localtime'))"
-				+ "on conflict (wikiID,folderName,setNumber,setRarity,setRarityColorVariant,"
+				+ "on conflict (wikiID,folderName,setNumber,"
 				+ "condition,editionPrinting,dateBought,priceBought) "
 				+ "do update set quantity = ?, rarityUnsure = ?, modificationDate = datetime('now','localtime')";
 
@@ -305,7 +541,7 @@ public class SQLiteConnection {
 		statementOwnedCard.setString(10, condition);
 		statementOwnedCard.setString(11, printing);
 		statementOwnedCard.setString(12, dateBought);
-		statementOwnedCard.setString(13, priceBought);
+		statementOwnedCard.setString(13, normalizedPrice);
 		statementOwnedCard.setInt(14, setIdentified.rarityUnsure);
 		statementOwnedCard.setInt(15, new Integer(quantity));
 		statementOwnedCard.setInt(16, setIdentified.rarityUnsure);
