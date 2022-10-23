@@ -7,6 +7,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
 import bean.CardSet;
@@ -254,6 +255,48 @@ public class SQLiteConnection {
 		return cardsInSetList;
 	}
 	
+	public static ArrayList<OwnedCard> getAllOwnedCards() throws SQLException {
+		Connection connection = SQLiteConnection.getInstance();
+
+		String setQuery = "select * from ownedCards order by setName, setRarity, cardName";
+
+		PreparedStatement setQueryStatement = connection.prepareStatement(setQuery);
+
+		ResultSet rs = setQueryStatement.executeQuery();
+
+		ArrayList<OwnedCard> cardsInSetList = new ArrayList<OwnedCard>();
+
+		while (rs.next()) {
+			
+			OwnedCard current = new OwnedCard();
+			
+			current.id = rs.getInt("wikiID");
+			current.rarityUnsure =rs.getInt("rarityUnsure");
+			current.quantity = rs.getInt("quantity");
+			current.cardName = rs.getString("cardName");
+			current.setCode = rs.getString("setCode");
+			current.setNumber = rs.getString("setNumber");
+			current.setName = rs.getString("setName");
+			current.setRarity = rs.getString("setRarity");
+			current.colorVariant = rs.getString("setRarityColorVariant");
+			current.folderName = rs.getString("folderName");
+			current.condition = rs.getString("condition");
+			current.editionPrinting = rs.getString("editionPrinting");
+			current.dateBought = rs.getString("dateBought");
+			current.priceBought = rs.getString("priceBought");
+			current.creationDate = rs.getString("creationDate");
+			current.modificationDate = rs.getString("modificationDate");
+			
+			
+			cardsInSetList.add(current);
+		}
+
+		rs.close();
+		setQueryStatement.close();
+
+		return cardsInSetList;
+	}
+	
 	public static ArrayList<OwnedCard> getRarityUnsureOwnedCards() throws SQLException {
 		Connection connection = SQLiteConnection.getInstance();
 
@@ -469,29 +512,47 @@ public class SQLiteConnection {
 		statementInsertSets.close();
 
 	}
+	
+	public static void setStringOrNull(PreparedStatement p, int index, String s) throws SQLException {
+		if(s == null) {
+			p.setNull(index, Types.VARCHAR);
+		}
+		else {
+			p.setString(index, s);
+		}
+	}
+	
+	public static void setIntegerOrNull(PreparedStatement p, int index, Integer value) throws SQLException {
+		if(value == null) {
+			p.setNull(index, Types.INTEGER);
+		}
+		else {
+			p.setInt(index, value.intValue());
+		}
+	}
 
-	public static void replaceIntoGamePlayCard(int wikiID, String name, String type, int passcode, String desc,
-			String attribute, String race, int linkval, int level, int scale, int atk, int def, String archetype)
-			throws SQLException {
+	public static void replaceIntoGamePlayCard(Integer wikiID, String name, String type, Integer passcode, String desc,
+			String attribute, String race, Integer linkval, Integer level, Integer scale, Integer atk, Integer def,
+			String archetype) throws SQLException {
 		Connection connection = SQLiteConnection.getInstance();
 
 		String gamePlayCard = "Replace into gamePlayCard(wikiID,title,type,passcode,lore,attribute,race,linkValue,level,pendScale,atk,def,archetype) values(?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 		PreparedStatement statementgamePlayCard = connection.prepareStatement(gamePlayCard);
 
-		statementgamePlayCard.setInt(1, wikiID);
-		statementgamePlayCard.setString(2, name);
-		statementgamePlayCard.setString(3, type);
-		statementgamePlayCard.setInt(4, passcode);
-		statementgamePlayCard.setString(5, desc);
-		statementgamePlayCard.setString(6, attribute);
-		statementgamePlayCard.setString(7, race);
-		statementgamePlayCard.setInt(8, linkval);
-		statementgamePlayCard.setInt(9, level);
-		statementgamePlayCard.setInt(10, scale);
-		statementgamePlayCard.setInt(11, atk);
-		statementgamePlayCard.setInt(12, def);
-		statementgamePlayCard.setString(13, archetype);
+		setIntegerOrNull(statementgamePlayCard, 1, wikiID);
+		setStringOrNull(statementgamePlayCard, 2, name);
+		setStringOrNull(statementgamePlayCard, 3, type);
+		setIntegerOrNull(statementgamePlayCard, 4, passcode);
+		setStringOrNull(statementgamePlayCard, 5, desc);
+		setStringOrNull(statementgamePlayCard, 6, attribute);
+		setStringOrNull(statementgamePlayCard, 7, race);
+		setIntegerOrNull(statementgamePlayCard, 8, linkval);
+		setIntegerOrNull(statementgamePlayCard, 9, level);
+		setIntegerOrNull(statementgamePlayCard, 10, scale);
+		setIntegerOrNull(statementgamePlayCard, 11, atk);
+		setIntegerOrNull(statementgamePlayCard, 12, def);
+		setStringOrNull(statementgamePlayCard, 13, archetype);
 
 		statementgamePlayCard.execute();
 
@@ -523,7 +584,7 @@ public class SQLiteConnection {
 				+ "datetime('now','localtime'),datetime('now','localtime'))"
 				+ "on conflict (wikiID,folderName,setNumber,"
 				+ "condition,editionPrinting,dateBought,priceBought) "
-				+ "do update set quantity = ?, rarityUnsure = ?, modificationDate = datetime('now','localtime')";
+				+ "do update set quantity = ?, rarityUnsure = ?, setRarity = ?, setRarityColorVariant = ?, modificationDate = datetime('now','localtime')";
 
 		PreparedStatement statementOwnedCard = connection.prepareStatement(ownedInsert);
 
@@ -545,7 +606,9 @@ public class SQLiteConnection {
 		statementOwnedCard.setInt(14, setIdentified.rarityUnsure);
 		statementOwnedCard.setInt(15, new Integer(quantity));
 		statementOwnedCard.setInt(16, setIdentified.rarityUnsure);
-
+		statementOwnedCard.setString(17, setIdentified.setRarity);
+		statementOwnedCard.setString(18, setIdentified.colorVariant);
+		
 		statementOwnedCard.execute();
 
 		statementOwnedCard.close();

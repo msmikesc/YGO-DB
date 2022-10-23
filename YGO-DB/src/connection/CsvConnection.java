@@ -64,7 +64,7 @@ public class CsvConnection {
 		return it;
 	}
 
-	public static CSVPrinter getRarityUnsureOutputFile(String filename) {
+	public static CSVPrinter getExportOutputFile(String filename) {
 		
 		try {
 			Writer fw = new OutputStreamWriter(new FileOutputStream(filename), StandardCharsets.UTF_16LE);
@@ -138,6 +138,59 @@ public class CsvConnection {
 
 		SQLiteConnection.upsertOwnedCard(folder, name, quantity, setCode, condition, printing, priceBought, dateBought,
 				setIdentified);
+	}
+ 	
+ 	public static Integer getIntOrNull(CSVRecord current, String recordName) {
+ 		try {
+			Integer returnVal = Integer.parseInt(current.get(recordName));
+			return returnVal;
+		}
+		catch(Exception e) {
+			return null;
+		}
+ 	}
+ 	
+ 	public static Integer getIntOrNegativeOne(CSVRecord current, String recordName) {
+ 		try {
+			Integer returnVal = Integer.parseInt(current.get(recordName));
+			return returnVal;
+		}
+		catch(Exception e) {
+			return new Integer(-1);
+		}
+ 	}
+ 	
+ 	public static String getStringOrNull(CSVRecord current, String recordName) {
+ 		try {
+			String returnVal = current.get(recordName);
+			
+			if(returnVal == null || returnVal.isBlank()) {
+				return null;
+			}
+			
+			return returnVal.trim();
+		}
+		catch(Exception e) {
+			return null;
+		}
+ 	}
+ 	
+ 	public static void insertGamePlayCardFromCSV(CSVRecord current, String defaultSetName) throws SQLException {
+
+		String name = getStringOrNull(current,"Card Name");
+		String type = getStringOrNull(current,"Card Type");
+		Integer passcode = getIntOrNegativeOne(current,"Passcode");
+		String lore = getStringOrNull(current,"Card Text");
+		String attribute = getStringOrNull(current,"Attribute");
+		String race = getStringOrNull(current,"Race");
+		Integer linkValue = getIntOrNull(current,"Link Value");
+		Integer pendScale = getIntOrNull(current,"Pendulum Scale");
+		Integer level = getIntOrNull(current,"Level/Rank");
+		Integer atk = getIntOrNull(current,"Attack");
+		Integer def = getIntOrNull(current,"Defense");
+		String archetype = getStringOrNull(current,"Archetype");
+
+		SQLiteConnection.replaceIntoGamePlayCard(passcode, name, type, passcode, lore, attribute, race, linkValue, pendScale, level, atk, def, archetype);
 	}
 
 	public static void insertCardSetFromCSV(CSVRecord current, String defaultSetName) throws SQLException {

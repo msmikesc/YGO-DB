@@ -22,7 +22,7 @@ public class ExportOwnedCardToCSV {
 		
 		ArrayList<OwnedCard> list = SQLiteConnection.getRarityUnsureOwnedCards();
 		
-		CSVPrinter p = CsvConnection.getRarityUnsureOutputFile(filename);
+		CSVPrinter p = CsvConnection.getExportOutputFile(filename);
 
 		for(OwnedCard current : list) {
 

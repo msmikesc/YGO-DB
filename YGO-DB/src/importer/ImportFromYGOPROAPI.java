@@ -106,18 +106,18 @@ public class ImportFromYGOPROAPI {
 
 	public static void insertGameplayCardFromYGOPRO(JSONObject current) throws SQLException {
 
-		int wikiID = Util.getIntOrNull(current, "id");
+		Integer wikiID = Util.getIntOrNull(current, "id");
 		String name = Util.getStringOrNull(current, "name");
 		String type = Util.getStringOrNull(current, "type");
-		int passcode = Util.getIntOrNull(current, "id");// passcode
+		Integer passcode = Util.getIntOrNull(current, "id");// passcode
 		String desc = Util.getStringOrNull(current, "desc");
 		String attribute = Util.getStringOrNull(current, "attribute");
 		String race = Util.getStringOrNull(current, "race");
-		int linkval = Util.getIntOrNull(current, "linkval");
-		int level = Util.getIntOrNull(current, "level");
-		int scale = Util.getIntOrNull(current, "scale");
-		int atk = Util.getIntOrNull(current, "atk");
-		int def = Util.getIntOrNull(current, "def");
+		Integer linkval = Util.getIntOrNull(current, "linkval");
+		Integer level = Util.getIntOrNull(current, "level");
+		Integer scale = Util.getIntOrNull(current, "scale");
+		Integer atk = Util.getIntOrNull(current, "atk");
+		Integer def = Util.getIntOrNull(current, "def");
 		String archetype = Util.getStringOrNull(current, "archetype");
 
 		SQLiteConnection.replaceIntoGamePlayCard(wikiID, name, type, passcode, desc, attribute, race, linkval, level,
