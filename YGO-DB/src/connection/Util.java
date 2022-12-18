@@ -9,6 +9,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import bean.CardSet;
+import bean.OwnedCard;
 import bean.SetMetaData;
 import bean.Rarity;
 
@@ -20,6 +21,42 @@ public class Util {
 	public static BigDecimal ten = new BigDecimal(10);
 	public static BigDecimal thirty = new BigDecimal(30);
 	public static BigDecimal oneCent = new BigDecimal(0.01);
+	
+	public static String defaultColorVariant = "-1";
+	
+	public static OwnedCard formOwnedCard(String folder, String name, String quantity, String setCode, String condition,
+			String printing, String priceBought, String dateBought, CardSet setIdentified) {
+		OwnedCard card = new OwnedCard();
+		
+		card.folderName = folder;
+		card.cardName = name;
+		card.quantity = Integer.valueOf(quantity);
+		card.setCode = setCode;
+		card.condition = condition;
+		card.editionPrinting = printing;
+		card.priceBought = normalizePrice(priceBought);
+		card.dateBought = dateBought;
+		card.setRarity = setIdentified.setRarity;
+		card.id = setIdentified.id;
+		card.colorVariant = setIdentified.colorVariant;
+		card.setName = setIdentified.setName;
+		card.setNumber = setIdentified.setNumber;
+		card.rarityUnsure = setIdentified.rarityUnsure;
+		
+		return card;
+	}
+	
+	public static boolean doesCardExactlyMatch(String folder, String name, String setCode,
+			String setNumber, String condition, String printing, String priceBought, String dateBought, String colorVariant,
+			OwnedCard existingCard) throws SQLException {
+		if (setNumber.equals(existingCard.setNumber) && priceBought.equals(existingCard.priceBought)
+				&& dateBought.equals(existingCard.dateBought) && folder.equals(existingCard.folderName)
+				&& condition.equals(existingCard.condition) && printing.equals(existingCard.editionPrinting)
+				&& colorVariant.equals(existingCard.colorVariant)) {
+			return true;
+		}
+		return false;
+	}
 
 	public static void checkSetCounts() throws SQLException {
 		ArrayList<SetMetaData> list = SQLiteConnection.getSetMetaDataFromSetData();
@@ -59,11 +96,33 @@ public class Util {
 
 	}
 
-	public static CardSet findRarity(String priceBought, String dateBought, String folderName,
-			String condition, String editionPrinting, String setNumber, String setName, String cardName)
-			throws SQLException {
+	public static String normalizePrice(String input) {
+		BigDecimal price = new BigDecimal(input);
 
-		ArrayList<CardSet> setRarities = SQLiteConnection.getRaritiesOfCardInSet(setNumber);
+		price = price.setScale(2, RoundingMode.HALF_UP);
+
+		return price.toString();
+	}
+
+	public static CardSet getFromOwnedCard(OwnedCard o) {
+		CardSet c = new CardSet();
+
+		c.cardName = o.cardName;
+		c.colorVariant = o.colorVariant;
+		c.id = o.id;
+		c.rarityUnsure = o.rarityUnsure;
+		c.setName = o.setName;
+		c.setNumber = o.setNumber;
+		c.setRarity = o.setRarity;
+		c.setPrice = o.setRarity;
+
+		return c;
+	}
+
+	public static CardSet findRarity(String priceBought, String dateBought, String folderName, String condition,
+			String editionPrinting, String setNumber, String setName, String cardName) throws SQLException {
+
+		ArrayList<CardSet> setRarities = DatabaseHashMap.getRaritiesOfCardInSetFromHashMap(setNumber);
 
 		if (setRarities.size() == 0) {
 			// try removing color code
@@ -71,7 +130,7 @@ public class Util {
 			String newSetNumber = setNumber.substring(0, setNumber.length() - 1);
 			String colorcode = setNumber.substring(setNumber.length() - 1, setNumber.length());
 
-			setRarities = SQLiteConnection.getRaritiesOfCardInSet(newSetNumber);
+			setRarities = DatabaseHashMap.getRaritiesOfCardInSetFromHashMap(newSetNumber);
 
 			for (CardSet c : setRarities) {
 				c.colorVariant = colorcode;
@@ -84,13 +143,6 @@ public class Util {
 			match.rarityUnsure = 0;
 
 			return match;
-		}
-
-		ArrayList<CardSet> ownedRarities = SQLiteConnection.getExistingOwnedRaritesForCard(setNumber, priceBought,
-				dateBought, folderName, condition, editionPrinting);
-
-		if (ownedRarities.size() == 1) {
-			return ownedRarities.get(0);
 		}
 
 		// if we haven't found any at all give up
@@ -121,7 +173,8 @@ public class Util {
 
 						match.rarityUnsure = 0;
 
-						System.out.println("Took a guess that " + setNumber + ":" + cardName + " is:" + match.setRarity);
+						System.out
+								.println("Took a guess that " + setNumber + ":" + cardName + " is:" + match.setRarity);
 
 						return match;
 					}
@@ -130,7 +183,8 @@ public class Util {
 
 						match.rarityUnsure = 0;
 
-						System.out.println("Took a guess that " + setNumber + ":" + cardName + " is:" + match.setRarity);
+						System.out
+								.println("Took a guess that " + setNumber + ":" + cardName + " is:" + match.setRarity);
 
 						return match;
 					}

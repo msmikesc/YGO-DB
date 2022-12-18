@@ -11,6 +11,7 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -19,6 +20,7 @@ import org.apache.commons.csv.CSVRecord;
 
 import bean.CardSet;
 import bean.OwnedCard;
+import bean.SetMetaData;
 
 public class CsvConnection {
 
@@ -26,7 +28,7 @@ public class CsvConnection {
 		File f = new File(Filename);
 
 		BufferedReader fr = new BufferedReader(new FileReader(f, charset));
-		
+
 		skipByteOrderMark(fr);
 
 		CSVParser parser = CSVFormat.DEFAULT.withHeader().parse(fr);
@@ -35,28 +37,26 @@ public class CsvConnection {
 
 		return it;
 	}
-	
-	private static void skipByteOrderMark(Reader reader) throws IOException
-    {
-        reader.mark(1);
-        char[] possibleBOM = new char[1];
-        reader.read(possibleBOM);
 
-        if (possibleBOM[0] != '\ufeff')
-        {
-            reader.reset();
-        }
-    }
-	
+	private static void skipByteOrderMark(Reader reader) throws IOException {
+		reader.mark(1);
+		char[] possibleBOM = new char[1];
+		reader.read(possibleBOM);
+
+		if (possibleBOM[0] != '\ufeff') {
+			reader.reset();
+		}
+	}
+
 	public static Iterator<CSVRecord> getIteratorSkipFirstLine(String Filename, Charset charset) throws IOException {
 		File f = new File(Filename);
 
 		FileReader fr = new FileReader(f, charset);
-		
+
 		BufferedReader s = new BufferedReader(fr);
-		
+
 		s.readLine();
-		
+
 		CSVParser parser = CSVFormat.DEFAULT.withHeader().parse(s);
 
 		Iterator<CSVRecord> it = parser.iterator();
@@ -65,24 +65,80 @@ public class CsvConnection {
 	}
 
 	public static CSVPrinter getExportOutputFile(String filename) {
-		
+
 		try {
 			Writer fw = new OutputStreamWriter(new FileOutputStream(filename), StandardCharsets.UTF_16LE);
-			CSVPrinter p  = new CSVPrinter(fw, CSVFormat.DEFAULT);
-			
-			p.printRecord("Folder Name","Quantity","Card Name","Set Code","Set Name","Card Number","Condition","Printing","Price Bought","Date Bought","Rarity","Rarity Color Variant", "Rarity Unsure");
-			
+			CSVPrinter p = new CSVPrinter(fw, CSVFormat.DEFAULT);
+
+			p.printRecord("Folder Name", "Quantity", "Card Name", "Set Code", "Set Name", "Card Number", "Condition",
+					"Printing", "Price Bought", "Date Bought", "Rarity", "Rarity Color Variant", "Rarity Unsure", "Passcode");
+
 			return p;
-			
+
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;
 		}
-		
+
 	}
 	
- 	public static void insertOwnedCardFromCSV(CSVRecord current) throws SQLException {
+	public static CSVPrinter getExportUploadFile(String filename) {
+
+		try {
+			Writer fw = new OutputStreamWriter(new FileOutputStream(filename), StandardCharsets.UTF_16LE);
+			CSVPrinter p = new CSVPrinter(fw, CSVFormat.DEFAULT);
+
+			p.printRecord("Folder Name", "Quantity", "Trade Quantity", "Card Name", "Set Code", "Set Name", "Card Number", "Condition",
+					"Printing","Language", "Price Bought", "Date Bought", "LOW", "MID", "MARKET");
+
+			return p;
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+
+	}
+	
+	public static CSVPrinter getAnalyzeOutputFile(String filename) {
+
+		try {
+			Writer fw = new OutputStreamWriter(new FileOutputStream(filename), StandardCharsets.UTF_16LE);
+			CSVPrinter p = new CSVPrinter(fw, CSVFormat.DEFAULT);
+
+			p.printRecord("Quantity", "Card Name","Card Type", "Rarities","Set Name","Set Code", "TCGPlayer Mass Buy 3", "TCGPlayer Mass Buy 1");
+
+			return p;
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+
+	}
+	
+	public static CSVPrinter getAnalyzePrintedOnceOutputFile(String filename) {
+
+		try {
+			Writer fw = new OutputStreamWriter(new FileOutputStream(filename), StandardCharsets.UTF_16LE);
+			CSVPrinter p = new CSVPrinter(fw, CSVFormat.DEFAULT);
+
+			p.printRecord("wikiID", "Card Name","Card Type", "Rarities","Set Names","Set Codes", "Release Date", "Archetype");
+
+			return p;
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+
+	}
+
+	public static OwnedCard getOwnedCardFromDragonShieldCSV(CSVRecord current) throws SQLException {
 
 		String folder = current.get("Folder Name").trim();
 		String name = current.get("Card Name").trim();
@@ -92,21 +148,65 @@ public class CsvConnection {
 		String setName = current.get("Set Name").trim();
 		String condition = current.get("Condition").trim();
 		String printing = current.get("Printing").trim();
-		String priceBought = current.get("Price Bought").trim();
+		String priceBought = Util.normalizePrice(current.get("Price Bought"));
 		String dateBought = current.get("Date Bought").trim();
 
 		if (printing.equals("Foil")) {
 			printing = "1st Edition";
 		}
 
-		CardSet setIdentified = Util.findRarity(priceBought, dateBought, folder, condition, printing,
-				setNumber, setName, name);
+		ArrayList<OwnedCard> ownedRarities = DatabaseHashMap.getExistingOwnedRaritesForCardFromHashMap(setNumber,
+				priceBought, dateBought, folder, condition, printing);
 
-		SQLiteConnection.upsertOwnedCard(folder, name, quantity, setCode, condition, printing, priceBought, dateBought,
-				setIdentified);
+		if (ownedRarities.size() == 1) {
+			OwnedCard existingCard = ownedRarities.get(0);
+			if (Util.doesCardExactlyMatch(folder, name, setCode, setNumber, condition, printing, priceBought,
+					dateBought, Util.defaultColorVariant, existingCard)) {
+				// exact match found
+				if (existingCard.quantity == Integer.parseInt(quantity)) {
+					// nothing to update
+					return null;
+				} else {
+					return existingCard;
+				}
+			}
+		}
+
+		if (ownedRarities.size() == 0) {
+			// try removing color code
+
+			String newSetNumber = setNumber.substring(0, setNumber.length() - 1);
+			
+			String colorCode = setNumber.substring( setNumber.length() - 1, setNumber.length());
+
+			ownedRarities = DatabaseHashMap.getExistingOwnedRaritesForCardFromHashMap(newSetNumber, priceBought,
+					dateBought, folder, condition, printing);
+
+			if (ownedRarities.size() == 1) {
+				OwnedCard existingCard = ownedRarities.get(0);
+				if (Util.doesCardExactlyMatch(folder, name, setCode, setNumber, condition, printing, priceBought,
+						dateBought,colorCode, existingCard)) {
+					// exact match found
+					if (existingCard.quantity == Integer.parseInt(quantity)) {
+						// nothing to update
+						return null;
+					} else {
+						return existingCard;
+					}
+				}
+			}
+		}
+
+		CardSet setIdentified = Util.findRarity(priceBought, dateBought, folder, condition, printing, setNumber,
+				setName, name);
+		
+		OwnedCard card = Util.formOwnedCard(folder, name, quantity, setCode, condition, printing, priceBought,
+				dateBought, setIdentified);
+
+		return card;
 	}
- 	
- 	public static void insertOwnedCardFromExportedCSV(CSVRecord current) throws SQLException {
+
+	public static OwnedCard getOwnedCardFromExportedCSV(CSVRecord current) throws SQLException {
 
 		String folder = current.get("Folder Name").trim();
 		String name = current.get("Card Name").trim();
@@ -116,17 +216,20 @@ public class CsvConnection {
 		String setName = current.get("Set Name").trim();
 		String condition = current.get("Condition").trim();
 		String printing = current.get("Printing").trim();
-		String priceBought = current.get("Price Bought").trim();
+		String priceBought = Util.normalizePrice(current.get("Price Bought").trim());
 		String dateBought = current.get("Date Bought").trim();
 		String rarity = current.get("Rarity").trim();
 		String rarityColorVariant = current.get("Rarity Color Variant").trim();
 		String rarityUnsure = current.get("Rarity Unsure").trim();
+		Integer wikiID = getIntOrNull(current, "Passcode");
 
 		if (printing.equals("Foil")) {
 			printing = "1st Edition";
 		}
 		
-		int wikiID = SQLiteConnection.getCardIdFromTitle(name);
+		if(wikiID == null) {
+			wikiID = SQLiteConnection.getCardIdFromTitle(name);
+		}
 
 		CardSet setIdentified = new CardSet();
 		setIdentified.rarityUnsure = new Integer(rarityUnsure);
@@ -135,62 +238,168 @@ public class CsvConnection {
 		setIdentified.setName = setName;
 		setIdentified.setNumber = setNumber;
 		setIdentified.id = wikiID;
+		
+		OwnedCard card = Util.formOwnedCard(folder, name, quantity, setCode, condition, printing, priceBought,
+				dateBought, setIdentified);
 
-		SQLiteConnection.upsertOwnedCard(folder, name, quantity, setCode, condition, printing, priceBought, dateBought,
-				setIdentified);
+		return card;
 	}
- 	
- 	public static Integer getIntOrNull(CSVRecord current, String recordName) {
- 		try {
-			Integer returnVal = Integer.parseInt(current.get(recordName));
-			return returnVal;
-		}
-		catch(Exception e) {
+	
+	public static OwnedCard getOwnedCardFromTCGPlayerCSV(CSVRecord current) throws SQLException {
+
+		String folder = "UnSynced Folder";
+
+		String items = current.get("ITEMS").trim();
+		String details = current.get("DETAILS").trim();
+		String price = current.get("PRICE").trim().replace("$", "");
+		String quantity = current.get("QUANTITY").trim();
+		
+		String colorVariant = Util.defaultColorVariant;
+
+		String[] nameAndSet = items.split("\n");
+
+		// possible sold by line
+		if (nameAndSet.length < 2 || nameAndSet.length > 3) {
+			System.out.println("Unknown format: " + items);
 			return null;
 		}
- 	}
- 	
- 	public static Integer getIntOrNegativeOne(CSVRecord current, String recordName) {
- 		try {
+
+		String name = nameAndSet[0].trim();
+		String setName = nameAndSet[1].trim();
+
+		// remove tcgplayer rarity id
+		if (name.contains("(Duel Terminal)")) {
+			name = name.replace("(Duel Terminal)", "").trim();
+		}
+		
+		if (name.contains("(Red)")) {
+			name = name.replace("(Red)", "").trim();
+			colorVariant = "r";
+		}
+		
+		if (name.contains("(Blue)")) {
+			name = name.replace("(Blue)", "").trim();
+			colorVariant = "b";
+		}
+		
+		if (name.contains("(Green)")) {
+			name = name.replace("(Green)", "").trim();
+			colorVariant = "g";
+		}
+		
+		if (name.contains("(Purple)")) {
+			name = name.replace("(Purple)", "").trim();
+			colorVariant = "p";
+		}
+		
+		if (name.contains("(Alternate Art)")) {
+			name = name.replace("(Alternate Art)", "").trim();
+			colorVariant = "a";
+		}
+
+		String[] rarityConditionPrinting = details.split("\n");
+
+		if (rarityConditionPrinting.length != 2) {
+			System.out.println("Unknown format: " + details);
+			return null;
+		}
+
+		String rarity = rarityConditionPrinting[0].replace("Rarity:", "").trim();
+
+		String printing = "Normal";
+
+		if (rarityConditionPrinting[1].contains("1st Edition")) {
+			printing = "1st Edition";
+		}
+
+		String condition = rarityConditionPrinting[1].replace("Unlimited", "").replace("Limited", "")
+				.replace("1st Edition", "").replace("Condition:", "").replaceAll("\\s", "")
+				.replace("LightlyPlayed", "LightPlayed").replace("ModeratelyPlayed", "Played")
+				.replace("HeavilyPlayed", "Poor").replace("Damaged", "Poor");
+
+		CardSet setIdentified = SQLiteConnection.getCardSetForCardInSet(name, setName);
+
+		if (setIdentified == null) {
+			System.out.println("Unknown setCode for card name and set: " + name + ":" + setName);
+			setIdentified = new CardSet();
+			setIdentified.rarityUnsure = 1;
+			setIdentified.colorVariant = Util.defaultColorVariant;
+			setIdentified.setName = setName;
+			setIdentified.setNumber = "";
+			setIdentified.id = -1;
+		}
+
+		setIdentified.setRarity = rarity;
+		setIdentified.colorVariant = colorVariant;
+		
+		String setCode = null;
+
+		ArrayList<SetMetaData> metaData = SQLiteConnection.getSetMetaDataFromSetName(setName);
+
+		if (metaData.size() != 1) {
+			System.out.println("Unknown metaData for set: " + setName);
+		} else {
+			setCode = metaData.get(0).set_code;
+		}
+
+		String priceBought = Util.normalizePrice(price);
+		String dateBought = java.time.LocalDate.now().toString();
+
+		OwnedCard card = Util.formOwnedCard(folder, name, quantity, setCode, condition, printing, priceBought,
+				dateBought, setIdentified);
+
+		return card;
+	}
+
+	public static Integer getIntOrNull(CSVRecord current, String recordName) {
+		try {
 			Integer returnVal = Integer.parseInt(current.get(recordName));
 			return returnVal;
+		} catch (Exception e) {
+			return null;
 		}
-		catch(Exception e) {
+	}
+
+	public static Integer getIntOrNegativeOne(CSVRecord current, String recordName) {
+		try {
+			Integer returnVal = Integer.parseInt(current.get(recordName));
+			return returnVal;
+		} catch (Exception e) {
 			return new Integer(-1);
 		}
- 	}
- 	
- 	public static String getStringOrNull(CSVRecord current, String recordName) {
- 		try {
+	}
+
+	public static String getStringOrNull(CSVRecord current, String recordName) {
+		try {
 			String returnVal = current.get(recordName);
-			
-			if(returnVal == null || returnVal.isBlank()) {
+
+			if (returnVal == null || returnVal.isBlank()) {
 				return null;
 			}
-			
+
 			return returnVal.trim();
-		}
-		catch(Exception e) {
+		} catch (Exception e) {
 			return null;
 		}
- 	}
- 	
- 	public static void insertGamePlayCardFromCSV(CSVRecord current, String defaultSetName) throws SQLException {
+	}
 
-		String name = getStringOrNull(current,"Card Name");
-		String type = getStringOrNull(current,"Card Type");
-		Integer passcode = getIntOrNegativeOne(current,"Passcode");
-		String lore = getStringOrNull(current,"Card Text");
-		String attribute = getStringOrNull(current,"Attribute");
-		String race = getStringOrNull(current,"Race");
-		Integer linkValue = getIntOrNull(current,"Link Value");
-		Integer pendScale = getIntOrNull(current,"Pendulum Scale");
-		Integer level = getIntOrNull(current,"Level/Rank");
-		Integer atk = getIntOrNull(current,"Attack");
-		Integer def = getIntOrNull(current,"Defense");
-		String archetype = getStringOrNull(current,"Archetype");
+	public static void insertGamePlayCardFromCSV(CSVRecord current, String defaultSetName) throws SQLException {
 
-		SQLiteConnection.replaceIntoGamePlayCard(passcode, name, type, passcode, lore, attribute, race, linkValue, pendScale, level, atk, def, archetype);
+		String name = getStringOrNull(current, "Card Name");
+		String type = getStringOrNull(current, "Card Type");
+		Integer passcode = getIntOrNegativeOne(current, "Passcode");
+		String lore = getStringOrNull(current, "Card Text");
+		String attribute = getStringOrNull(current, "Attribute");
+		String race = getStringOrNull(current, "Race");
+		Integer linkValue = getIntOrNull(current, "Link Value");
+		Integer pendScale = getIntOrNull(current, "Pendulum Scale");
+		Integer level = getIntOrNull(current, "Level/Rank");
+		Integer atk = getIntOrNull(current, "Attack");
+		Integer def = getIntOrNull(current, "Defense");
+		String archetype = getStringOrNull(current, "Archetype");
+
+		SQLiteConnection.replaceIntoGamePlayCard(passcode, name, type, passcode, lore, attribute, race, linkValue,
+				pendScale, level, atk, def, archetype);
 	}
 
 	public static void insertCardSetFromCSV(CSVRecord current, String defaultSetName) throws SQLException {
@@ -208,10 +417,12 @@ public class CsvConnection {
 		}
 
 		int wikiID = SQLiteConnection.getCardIdFromTitle(name);
-
 		// try skill card
 		if (wikiID == -1) {
 			wikiID = SQLiteConnection.getCardIdFromTitle(name + " (Skill Card)");
+			if (wikiID != -1) {
+				name = name + " (Skill Card)";
+			}
 		}
 
 		if (wikiID == -1) {
@@ -220,14 +431,37 @@ public class CsvConnection {
 
 		String price = Util.getAdjustedPriceFromRarity(rarity, "0");
 
-		SQLiteConnection.replaceIntoCardSet(cardNumber, rarity, setName, wikiID, price);
+		SQLiteConnection.replaceIntoCardSet(cardNumber, rarity, setName, wikiID, price, name);
 	}
 
-	
 	public static void writeOwnedCardToCSV(CSVPrinter p, OwnedCard current) throws IOException {
-		//p.printRecord("Folder Name","Quantity","Card Name","Set Code","Set Name","Card Number","Condition","Printing","Price Bought","Date Bought","Rarity","Rarity Color Variant", "Rarity Unsure");
-		p.printRecord(current.folderName, current.quantity, current.cardName, current.setCode, current.setName, current.setNumber, current.condition, current.editionPrinting, current.priceBought, current.dateBought, current.setRarity, current.colorVariant, current.rarityUnsure);
+		// p.printRecord("Folder Name","Quantity","Card Name","Set Code","Set
+		// Name","Card Number","Condition","Printing","Price Bought","Date
+		// Bought","Rarity","Rarity Color Variant", "Rarity Unsure","Passcode");
+		p.printRecord(current.folderName, current.quantity, current.cardName, current.setCode, current.setName,
+				current.setNumber, current.condition, current.editionPrinting, current.priceBought, current.dateBought,
+				current.setRarity, current.colorVariant, current.rarityUnsure, current.id);
+
+	}
+	
+	public static void writeUploadCardToCSV(CSVPrinter p, OwnedCard current) throws IOException {
+		// Folder Name	Quantity	Trade Quantity	Card Name	Set Code	Set Name	Card Number	
+		//Condition	Printing	Language	Price Bought	Date Bought	LOW	MID	MARKET
 		
+		if(current.editionPrinting.equals("1st Edition")) {
+			current.editionPrinting = "Foil";
+		}
+		
+		String outputSetNumber = current.setNumber;
+		
+		if(!current.colorVariant.equalsIgnoreCase(Util.defaultColorVariant)) {
+			outputSetNumber += current.colorVariant;
+		}
+		
+		p.printRecord(current.folderName, current.quantity,0, current.cardName, current.setCode, current.setName,
+				outputSetNumber, current.condition, current.editionPrinting, "English", current.priceBought, current.dateBought,
+				0, 0, 0);
+
 	}
 
 }

@@ -1,17 +1,19 @@
 package analyze;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Dictionary;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Hashtable;
+import java.util.HashMap;
+import org.apache.commons.csv.CSVPrinter;
+
+import bean.AnalyzeData;
 import bean.CardSet;
 import bean.OwnedCard;
-import bean.Rarity;
 import bean.SetMetaData;
+import connection.CsvConnection;
 import connection.SQLiteConnection;
 
 public class AnalyzeCardsInSet {
@@ -23,103 +25,159 @@ public class AnalyzeCardsInSet {
 	}
 
 	public void run() throws SQLException, IOException {
-		
-		String setName = "KICO";
-		
-		ArrayList<Integer> list = SQLiteConnection.getDistinctCardIDsInSetByName(setName);
-		
-		if(list.size() == 0) {
-			ArrayList<SetMetaData> setNames = SQLiteConnection.getSetMetaDataFromSetCode(setName);
-			setName = setNames.get(0).set_name;
-			list = SQLiteConnection.getDistinctCardIDsInSetByName(setName);
+
+		System.out.print("Set Name or Code: ");
+
+		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+
+		String setName = reader.readLine();
+		String finalFileName = setName;
+
+		if (setName.isBlank()) {
+			setName = "HAC1;BLVO;SDFC;MAMA;SGX2;SDCB;MP22;TAMA;POTE;"
+					+ "LDS3;LED9;DIFO;GFP2;SDAZ;SGX1;BACH;GRCR;BROL;"
+					+ "MGED;BODE;LED8;SDCS;MP21;DAMA;KICO;EGO1;EGS1;"
+					+ "LIOV;ANGU;GEIM;SBCB;SDCH";
+			finalFileName = "Combined";
 		}
-		
-		
-		Dictionary<Integer, ArrayList<String>> d = new Hashtable<Integer, ArrayList<String>>();
-		
-		for (int i :list) {
-			ArrayList<OwnedCard> cardsList = SQLiteConnection.getNumberOfOwnedCardsById(i);
-			
-			ArrayList<CardSet> rarityList = SQLiteConnection.getAllRaritiesOfCardByID(i);
-			
-			String niceList = getStringOfRarities(rarityList);
-			
-			if(cardsList.size()==0) {
-				
-				String title = SQLiteConnection.getCardTitleFromID(i);
-				
-				if(title == null) {
-				
-					addToDictionaryList(d,-1,"No cards found for id:" + i);
-				}
-				else {
-					addToDictionaryList(d, 0, title+niceList);
-				}
-			}
-			
-			for(OwnedCard current: cardsList) {
-				addToDictionaryList(d, current.quantity, current.cardName+niceList);
-			}
+
+		HashMap<String, AnalyzeData> h = new HashMap<String, AnalyzeData>();
+
+		String[] sets = setName.split(";");
+
+		for (String individualSet : sets) {
+			addAnalyzeDataForSet(h, individualSet);
 		}
-		
-		Enumeration<Integer> quantityEnum = d.keys();
-		
-		ArrayList<Integer> quantityList = Collections.list(quantityEnum);
-		Collections.sort(quantityList);
-		
+
+		ArrayList<AnalyzeData> array = new ArrayList<AnalyzeData>(h.values());
+
+		printOutput(array, finalFileName);
+
+	}
+
+	public void printOutput(ArrayList<AnalyzeData> array, String setName) throws IOException {
+		Collections.sort(array);
+
+		String filename = "C:\\Users\\Mike\\Documents\\GitHub\\YGO-DB\\YGO-DB\\csv\\Analyze-"
+				+ setName.replaceAll("[\\s\\\\/:*?\"<>|]", "") + ".csv";
+
+		CSVPrinter p = CsvConnection.getAnalyzeOutputFile(filename);
+
 		boolean printedSeparator = false;
-		
-		for(Integer i: quantityList) {
-			ArrayList<String> currentList = d.get(i);
-			Collections.sort(currentList);
-			
-			if(!printedSeparator &&i >= 3) {
+
+		for (AnalyzeData s : array) {
+
+			if (!printedSeparator && s.quantity >= 3) {
 				printedSeparator = true;
 				System.out.println("");
 				System.out.println("----");
 				System.out.println("");
 			}
-			
-			for(String s:currentList) {
-				System.out.println(i+":"+s);
+
+			System.out.println(s.quantity + ":" + s.cardName + " " + s.getStringOfRarities());
+
+			String massbuy = "";
+
+			if (s.quantity < 3) {
+				if (s.cardType.equals("Skill Card")) {
+					if (s.quantity < 1) {
+						massbuy = (1) + " " + s.cardName;
+					} else {
+						massbuy = "";
+					}
+				} else {
+
+					massbuy = (3 - s.quantity) + " " + s.cardName;
+				}
 			}
-			
+
+			String massbuy1 = "";
+
+			if (s.quantity < 1) {
+				massbuy1 = (1 - s.quantity) + " " + s.cardName;
+			}
+
+			p.printRecord(s.quantity, s.cardName, s.cardType, s.getStringOfRarities(), s.getStringOfSetNames(),
+					s.getStringOfSetNumbers(), massbuy, massbuy1);
+
 		}
-		
+		p.flush();
+		p.close();
 	}
-	
-	private String getStringOfRarities(ArrayList<CardSet> list) {
-		HashSet<Rarity> enumList = new HashSet<Rarity>();
-		
-		for(CardSet s: list) {
-			Rarity rarityValue = Rarity.fromString(s.setRarity);
-			enumList.add(rarityValue);
+
+	public void addAnalyzeDataForSet(HashMap<String, AnalyzeData> h, String setName) throws SQLException {
+		ArrayList<Integer> list = SQLiteConnection.getDistinctCardIDsInSetByName(setName);
+
+		if (list.size() == 0) {
+			ArrayList<SetMetaData> setNames = SQLiteConnection.getSetMetaDataFromSetCode(setName.toUpperCase());
+
+			if (setNames == null || setNames.isEmpty() ) {
+				System.out.println("Unable to identify card set:" + setName);
+				return;
+			}
+
+			setName = setNames.get(0).set_name;
+			list = SQLiteConnection.getDistinctCardIDsInSetByName(setName);
 		}
-		
-		ArrayList<Rarity> enumList2 = new ArrayList<Rarity>(enumList);
-		
-		Collections.sort(enumList2);
-		
-		String output = " (" + enumList2.get(0).toString();
-		
-		for(int i = 1; i < enumList.size(); i++) {
-			output += ", " + enumList2.get(i).toString();
+
+		for (int i : list) {
+			ArrayList<OwnedCard> cardsList = SQLiteConnection.getNumberOfOwnedCardsById(i);
+
+			ArrayList<CardSet> rarityList = SQLiteConnection.getRaritiesOfCardInSetByID(i, setName);
+
+			if (cardsList.size() == 0) {
+
+				String title = SQLiteConnection.getCardTitleFromID(i);
+
+				AnalyzeData currentData = new AnalyzeData();
+
+				if (title == null) {
+					currentData.cardName = "No cards found for id:" + i;
+					currentData.quantity = -1;
+				} else {
+					currentData.cardName = title;
+					currentData.quantity = 0;
+				}
+
+				for (CardSet rarity : rarityList) {
+					currentData.setRarities.add(rarity.setRarity);
+				}
+
+				currentData.setNumber.add(rarityList.get(0).setNumber);
+				currentData.cardType = rarityList.get(0).cardType;
+				currentData.setName.add(setName);
+				addToHashMap(h, currentData);
+			}
+
+			for (OwnedCard current : cardsList) {
+				AnalyzeData currentData = new AnalyzeData();
+
+				currentData.cardName = current.cardName;
+				currentData.quantity = current.quantity;
+
+				for (CardSet rarity : rarityList) {
+					currentData.setRarities.add(rarity.setRarity);
+				}
+
+				currentData.setNumber.add(rarityList.get(0).setNumber);
+				currentData.cardType = rarityList.get(0).cardType;
+				currentData.setName.add(setName);
+				addToHashMap(h, currentData);
+			}
 		}
-		
-		output += ")";
-		
-		return output;
-		
-		
 	}
-	
-	private void addToDictionaryList(Dictionary<Integer, ArrayList<String>> d, int i, String s) {
-		
-		if(d.get(i) == null) {
-			d.put(i, new ArrayList<String>());
+
+	private void addToHashMap(HashMap<String, AnalyzeData> h, AnalyzeData s) {
+
+		AnalyzeData existing = h.get(s.cardName);
+
+		if (existing == null) {
+			h.put(s.cardName, s);
+		} else {
+			existing.setName.addAll(s.setName);
+			existing.setNumber.addAll(s.setNumber);
+			existing.setRarities.addAll(s.setRarities);
 		}
-		
-		d.get(i).add(s);
-		
+
 	}
 }

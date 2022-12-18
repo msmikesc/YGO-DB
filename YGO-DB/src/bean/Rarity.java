@@ -32,6 +32,7 @@ public enum Rarity {
 	UltraSecretRare("Ultra Secret Rare"),
 	DuelTerminalNormalRareParallelRare("Duel Terminal Normal Rare Parallel Rare"),
 	SecretRareTenThousand("10000 Secret Rare"),
+	UltraRarePharohsRare("URPR"),
 	StarlightRare("Starlight Rare"),
 	GhostRare("Ghost Rare"),
 	UltimateRare("Ultimate Rare");

@@ -20,11 +20,12 @@ public class ImportFromYGOPROAPI {
 		ImportFromYGOPROAPI mainObj = new ImportFromYGOPROAPI();
 		mainObj.run();
 		SQLiteConnection.closeInstance();
+		System.out.println("Import Finished");
 	}
 
 	public void run() throws SQLException, IOException {
 
-		String setName = "Darkwing Blast";
+		String setName = "Structure Deck: Dark World";
 
 		setName = setName.trim();
 
@@ -148,7 +149,7 @@ public class ImportFromYGOPROAPI {
 
 			set_price = Util.getAdjustedPriceFromRarity(set_rarity, set_price);
 
-			SQLiteConnection.replaceIntoCardSet(set_code, set_rarity, set_name, wikiID, set_price);
+			SQLiteConnection.replaceIntoCardSet(set_code, set_rarity, set_name, wikiID, set_price, name);
 
 		}
 	}

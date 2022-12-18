@@ -1,20 +1,11 @@
 package importer;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
-import java.util.Scanner;
-
 import org.apache.commons.csv.CSVRecord;
-import org.json.*;
-
 import connection.CsvConnection;
 import connection.SQLiteConnection;
-import connection.Util;
-
 import java.sql.SQLException;
 
 public class ImportGamePlayCardFromCSV {
@@ -23,16 +14,16 @@ public class ImportGamePlayCardFromCSV {
 		ImportGamePlayCardFromCSV mainObj = new ImportGamePlayCardFromCSV();
 		mainObj.run();
 		SQLiteConnection.closeInstance();
+		System.out.println("Import Complete");
 	}
 
 	public void run() throws SQLException, IOException {
-		
 		
 		String csvFileName = "gamePlayCards";
 
 		String fileNameString = "C:\\Users\\Mike\\Documents\\GitHub\\YGO-DB\\YGO-DB\\csv\\" + csvFileName + ".csv";
 
-		Iterator<CSVRecord> it = CsvConnection.getIterator(fileNameString, StandardCharsets.UTF_8);
+		Iterator<CSVRecord> it = CsvConnection.getIterator(fileNameString, StandardCharsets.UTF_16LE);
 
 		while (it.hasNext()) {
 

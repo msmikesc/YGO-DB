@@ -3,8 +3,6 @@ package connection;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import connection.SQLiteConnection;
-import connection.Util;
 
 public class CheckDBforIssues {
 

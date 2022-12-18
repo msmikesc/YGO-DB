@@ -15,6 +15,7 @@ public class ImportCardSetFromCSV {
 		ImportCardSetFromCSV mainObj = new ImportCardSetFromCSV();
 		mainObj.run();
 		SQLiteConnection.closeInstance();
+		System.out.println("Import Complete");
 	}
 
 	public void run() throws SQLException, IOException {
@@ -23,7 +24,7 @@ public class ImportCardSetFromCSV {
 
 		String fileNameString = "C:\\Users\\Mike\\Documents\\GitHub\\YGO-DB\\YGO-DB\\csv\\" + csvFileName + ".csv";
 
-		Iterator<CSVRecord> it = CsvConnection.getIterator(fileNameString, StandardCharsets.UTF_8);
+		Iterator<CSVRecord> it = CsvConnection.getIterator(fileNameString, StandardCharsets.UTF_16LE);
 
 		while (it.hasNext()) {
 
