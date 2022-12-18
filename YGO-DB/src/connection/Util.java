@@ -46,8 +46,19 @@ public class Util {
 		return card;
 	}
 	
-	public static boolean doesCardExactlyMatch(String folder, String name, String setCode,
-			String setNumber, String condition, String printing, String priceBought, String dateBought, String colorVariant,
+	public static boolean doesCardExactlyMatch(String folder, String name, String setCode, String setNumber,
+			String condition, String printing, String priceBought, String dateBought, OwnedCard existingCard)
+			throws SQLException {
+		if (setNumber.equals(existingCard.setNumber) && priceBought.equals(existingCard.priceBought)
+				&& dateBought.equals(existingCard.dateBought) && folder.equals(existingCard.folderName)
+				&& condition.equals(existingCard.condition) && printing.equals(existingCard.editionPrinting)) {
+			return true;
+		}
+		return false;
+	}
+	
+	public static boolean doesCardExactlyMatchWithColor(String folder, String name, String setCode, String setNumber,
+			String condition, String printing, String priceBought, String dateBought, String colorVariant,
 			OwnedCard existingCard) throws SQLException {
 		if (setNumber.equals(existingCard.setNumber) && priceBought.equals(existingCard.priceBought)
 				&& dateBought.equals(existingCard.dateBought) && folder.equals(existingCard.folderName)

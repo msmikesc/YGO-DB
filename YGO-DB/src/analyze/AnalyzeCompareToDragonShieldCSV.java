@@ -19,7 +19,7 @@ import connection.Util;
 
 public class AnalyzeCompareToDragonShieldCSV {
 	
-	private static final List<String> setIgnoreColorVariantConfict = Arrays.asList("Legendary Duelists: Season 2");
+	public static final List<String> setColorVariantUnsupportedDragonShield = Arrays.asList("Legendary Duelists: Season 2");
 
 	public static void main(String[] args) throws SQLException, IOException {
 		AnalyzeCompareToDragonShieldCSV mainObj = new AnalyzeCompareToDragonShieldCSV();
@@ -80,26 +80,26 @@ public class AnalyzeCompareToDragonShieldCSV {
 				
 				OwnedCard card = list.get(0);
 				
-				if(!colorCode.equalsIgnoreCase(list.get(0).colorVariant) && !setIgnoreColorVariantConfict.contains(card.setName)) {
+				if(!colorCode.equalsIgnoreCase(list.get(0).colorVariant) && !setColorVariantUnsupportedDragonShield.contains(card.setName)) {
 					System.out.println("Color Code Mismatch on: " + card.cardName + " " +  card.setNumber + " " +  card.setRarity + " " + card.colorVariant + " " + card.priceBought + " " +  card.dateBought);
 				}
 				
 				databaseList.remove(key);
 			}
 			else {
-				
+
 				boolean foundMatch = false;
 
 				for (int i = 0; i < list.size(); i++) {
 
 					OwnedCard existingCard = list.get(i);
 
-					if (Util.doesCardExactlyMatch(folder, name, setCode, setNumber, condition,
-							printing, priceBought, dateBought, colorCode, existingCard)) {
+					if (Util.doesCardExactlyMatchWithColor(folder, name, setCode, setNumber, condition, printing,
+							priceBought, dateBought, colorCode, existingCard)) {
 						foundMatch = true;
 						list.remove(i);
-						
-						if(list.size() == 0) {
+
+						if (list.size() == 0) {
 							databaseList.remove(key);
 						}
 						break;
@@ -114,7 +114,7 @@ public class AnalyzeCompareToDragonShieldCSV {
 			}
 
 		}
-		
+
 		for(ArrayList<OwnedCard> rarityList: databaseList.values()) {
 			for(OwnedCard card: rarityList) {
 				System.out.println("Card in DB but not in CSV: " + card.cardName + " " +  card.setNumber + " " +  card.setRarity + " " + card.colorVariant + " " + card.priceBought + " " +  card.dateBought);

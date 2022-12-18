@@ -18,6 +18,7 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 
+import analyze.AnalyzeCompareToDragonShieldCSV;
 import bean.CardSet;
 import bean.OwnedCard;
 import bean.SetMetaData;
@@ -150,6 +151,8 @@ public class CsvConnection {
 		String printing = current.get("Printing").trim();
 		String priceBought = Util.normalizePrice(current.get("Price Bought"));
 		String dateBought = current.get("Date Bought").trim();
+		
+		String colorCode = Util.defaultColorVariant;
 
 		if (printing.equals("Foil")) {
 			printing = "1st Edition";
@@ -161,7 +164,7 @@ public class CsvConnection {
 		if (ownedRarities.size() == 1) {
 			OwnedCard existingCard = ownedRarities.get(0);
 			if (Util.doesCardExactlyMatch(folder, name, setCode, setNumber, condition, printing, priceBought,
-					dateBought, Util.defaultColorVariant, existingCard)) {
+					dateBought, existingCard)) {
 				// exact match found
 				if (existingCard.quantity == Integer.parseInt(quantity)) {
 					// nothing to update
@@ -176,16 +179,16 @@ public class CsvConnection {
 			// try removing color code
 
 			String newSetNumber = setNumber.substring(0, setNumber.length() - 1);
-			
-			String colorCode = setNumber.substring( setNumber.length() - 1, setNumber.length());
+
+			colorCode = setNumber.substring(setNumber.length() - 1, setNumber.length());
 
 			ownedRarities = DatabaseHashMap.getExistingOwnedRaritesForCardFromHashMap(newSetNumber, priceBought,
 					dateBought, folder, condition, printing);
 
 			if (ownedRarities.size() == 1) {
 				OwnedCard existingCard = ownedRarities.get(0);
-				if (Util.doesCardExactlyMatch(folder, name, setCode, setNumber, condition, printing, priceBought,
-						dateBought,colorCode, existingCard)) {
+				if (Util.doesCardExactlyMatch(folder, name, setCode, newSetNumber, condition, printing, priceBought,
+						dateBought, existingCard)) {
 					// exact match found
 					if (existingCard.quantity == Integer.parseInt(quantity)) {
 						// nothing to update
@@ -199,6 +202,8 @@ public class CsvConnection {
 
 		CardSet setIdentified = Util.findRarity(priceBought, dateBought, folder, condition, printing, setNumber,
 				setName, name);
+		
+		setIdentified.colorVariant = colorCode;
 		
 		OwnedCard card = Util.formOwnedCard(folder, name, quantity, setCode, condition, printing, priceBought,
 				dateBought, setIdentified);
@@ -453,11 +458,12 @@ public class CsvConnection {
 		}
 		
 		String outputSetNumber = current.setNumber;
-		
-		if(!current.colorVariant.equalsIgnoreCase(Util.defaultColorVariant)) {
+
+		if (!current.colorVariant.equalsIgnoreCase(Util.defaultColorVariant)
+				&& !AnalyzeCompareToDragonShieldCSV.setColorVariantUnsupportedDragonShield.contains(current.setName)) {
 			outputSetNumber += current.colorVariant;
 		}
-		
+
 		p.printRecord(current.folderName, current.quantity,0, current.cardName, current.setCode, current.setName,
 				outputSetNumber, current.condition, current.editionPrinting, "English", current.priceBought, current.dateBought,
 				0, 0, 0);

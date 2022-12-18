@@ -39,7 +39,7 @@ public class ImportOwnedCardFromExportedCSV {
 					card.dateBought, card.folderName, card.condition, card.editionPrinting);
 
 			for (OwnedCard existingCard : ownedRarities) {
-				if (Util.doesCardExactlyMatch(card.folderName, card.cardName, card.setCode, card.setNumber,
+				if (Util.doesCardExactlyMatchWithColor(card.folderName, card.cardName, card.setCode, card.setNumber,
 						card.condition, card.editionPrinting, card.priceBought, card.dateBought, card.colorVariant,
 						existingCard)) {
 					// exact match found

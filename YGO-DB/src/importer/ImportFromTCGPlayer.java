@@ -51,7 +51,7 @@ public class ImportFromTCGPlayer {
 							card.editionPrinting);
 
 					for (OwnedCard existingCard : ownedRarities) {
-						if (Util.doesCardExactlyMatch(card.folderName, card.cardName, card.setCode,
+						if (Util.doesCardExactlyMatchWithColor(card.folderName, card.cardName, card.setCode,
 								card.setNumber, card.condition, card.editionPrinting, card.priceBought, card.dateBought,
 								card.colorVariant, existingCard)) {
 							card.quantity += existingCard.quantity;
@@ -64,8 +64,8 @@ public class ImportFromTCGPlayer {
 
 			}
 		}
-		
-		for(OwnedCard card: map.values()) {
+
+		for (OwnedCard card : map.values()) {
 			SQLiteConnection.upsertOwnedCardBatch(card);
 		}
 

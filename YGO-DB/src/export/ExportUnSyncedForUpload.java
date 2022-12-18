@@ -19,6 +19,8 @@ public class ExportUnSyncedForUpload {
 	public void run() throws SQLException, IOException {
 
 		boolean isOnlyUnsyncedCards = true;
+		
+		//isOnlyUnsyncedCards = false;
 
 		String filename = "C:\\Users\\Mike\\Documents\\GitHub\\YGO-DB\\YGO-DB\\csv\\all-upload.csv";
 
