@@ -161,42 +161,26 @@ public class CsvConnection {
 		ArrayList<OwnedCard> ownedRarities = DatabaseHashMap.getExistingOwnedRaritesForCardFromHashMap(setNumber,
 				priceBought, dateBought, folder, condition, printing);
 
-		if (ownedRarities.size() == 1) {
-			OwnedCard existingCard = ownedRarities.get(0);
-			if (Util.doesCardExactlyMatch(folder, name, setCode, setNumber, condition, printing, priceBought,
-					dateBought, existingCard)) {
-				// exact match found
-				if (existingCard.quantity == Integer.parseInt(quantity)) {
-					// nothing to update
-					return null;
-				} else {
-					return existingCard;
-				}
-			}
-		}
-
 		if (ownedRarities.size() == 0) {
 			// try removing color code
 
 			String newSetNumber = setNumber.substring(0, setNumber.length() - 1);
-
-			colorCode = setNumber.substring(setNumber.length() - 1, setNumber.length());
+			String newColorCode = setNumber.substring(setNumber.length() - 1, setNumber.length());
 
 			ownedRarities = DatabaseHashMap.getExistingOwnedRaritesForCardFromHashMap(newSetNumber, priceBought,
 					dateBought, folder, condition, printing);
 
-			if (ownedRarities.size() == 1) {
-				OwnedCard existingCard = ownedRarities.get(0);
-				if (Util.doesCardExactlyMatch(folder, name, setCode, newSetNumber, condition, printing, priceBought,
-						dateBought, existingCard)) {
-					// exact match found
-					if (existingCard.quantity == Integer.parseInt(quantity)) {
-						// nothing to update
-						return null;
-					} else {
-						return existingCard;
-					}
-				}
+			if (ownedRarities.size() > 0) {
+				setNumber = newSetNumber;
+				colorCode = newColorCode;
+			}
+		}
+
+		for (OwnedCard existingCard : ownedRarities) {
+			if (Util.doesCardExactlyMatch(folder, name, setCode, setNumber, condition, printing, priceBought,
+					dateBought, existingCard)) {
+				// exact match found
+				return existingCard;
 			}
 		}
 
