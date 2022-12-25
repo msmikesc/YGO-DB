@@ -27,6 +27,8 @@ public class ImportFromDragonShield {
 
 		Iterator<CSVRecord> it = CsvConnection.getIteratorSkipFirstLine(
 				"C:\\Users\\Mike\\Documents\\GitHub\\YGO-DB\\YGO-DB\\csv\\all-folders.csv", StandardCharsets.UTF_16LE);
+		
+		int count = 0;
 
 		while (it.hasNext()) {
 
@@ -52,9 +54,12 @@ public class ImportFromDragonShield {
 			}
 			
 			if(card != null) {
+				count++;
 				SQLiteConnection.upsertOwnedCardBatch(card);
 			}
 		}
+		
+		System.out.println("Imported " + count + " cards");
 
 	}
 

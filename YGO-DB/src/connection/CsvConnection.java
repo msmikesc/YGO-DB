@@ -295,10 +295,13 @@ public class CsvConnection {
 
 		String rarity = rarityConditionPrinting[0].replace("Rarity:", "").trim();
 
-		String printing = "Normal";
+		String printing = "Limited";
 
 		if (rarityConditionPrinting[1].contains("1st Edition")) {
 			printing = "1st Edition";
+		}
+		if (rarityConditionPrinting[1].contains("Unlimited")) {
+			printing = "Unlimited";
 		}
 
 		String condition = rarityConditionPrinting[1].replace("Unlimited", "").replace("Limited", "")
