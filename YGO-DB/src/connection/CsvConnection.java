@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
+
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
@@ -72,7 +73,8 @@ public class CsvConnection {
 			CSVPrinter p = new CSVPrinter(fw, CSVFormat.DEFAULT);
 
 			p.printRecord("Folder Name", "Quantity", "Card Name", "Set Code", "Set Name", "Card Number", "Condition",
-					"Printing", "Price Bought", "Date Bought", "Rarity", "Rarity Color Variant", "Rarity Unsure", "Passcode");
+					"Printing", "Price Bought", "Date Bought", "Rarity", "Rarity Color Variant", "Rarity Unsure",
+					"Passcode", "LOW", "MID", "MARKET");
 
 			return p;
 
@@ -90,8 +92,9 @@ public class CsvConnection {
 			Writer fw = new OutputStreamWriter(new FileOutputStream(filename), StandardCharsets.UTF_16LE);
 			CSVPrinter p = new CSVPrinter(fw, CSVFormat.DEFAULT);
 
-			p.printRecord("Folder Name", "Quantity", "Trade Quantity", "Card Name", "Set Code", "Set Name", "Card Number", "Condition",
-					"Printing","Language", "Price Bought", "Date Bought", "LOW", "MID", "MARKET");
+			p.printRecord("Folder Name", "Quantity", "Trade Quantity", "Card Name", "Set Code", "Set Name",
+					"Card Number", "Condition", "Printing", "Language", "Price Bought", "Date Bought", "LOW", "MID",
+					"MARKET");
 
 			return p;
 
@@ -110,6 +113,25 @@ public class CsvConnection {
 			CSVPrinter p = new CSVPrinter(fw, CSVFormat.DEFAULT);
 
 			p.printRecord("Quantity", "Card Name","Card Type", "Rarities","Set Name","Set Code", "TCGPlayer Mass Buy 3", "TCGPlayer Mass Buy 1");
+
+			return p;
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+
+	}
+	
+	public static CSVPrinter getSellFile(String filename) {
+
+		try {
+			Writer fw = new OutputStreamWriter(new FileOutputStream(filename), StandardCharsets.UTF_16LE);
+			CSVPrinter p = new CSVPrinter(fw, CSVFormat.DEFAULT);
+
+			p.printRecord("Quantity", "Card Name", "Rarity", "Set Name", "Set Code", "Price Bought", "LOW",
+					"MID", "MARKET");
 
 			return p;
 
@@ -153,10 +175,16 @@ public class CsvConnection {
 		String dateBought = current.get("Date Bought").trim();
 		
 		String colorCode = Util.defaultColorVariant;
+		
+		String priceLow = Util.normalizePrice(current.get("LOW"));
+		String priceMid = Util.normalizePrice(current.get("MID"));
+		String priceMarket = Util.normalizePrice(current.get("MARKET"));
 
 		if (printing.equals("Foil")) {
 			printing = "1st Edition";
 		}
+		
+		setName = Util.checkForTranslatedSetName(setName);
 
 		ArrayList<OwnedCard> ownedRarities = DatabaseHashMap.getExistingOwnedRaritesForCardFromHashMap(setNumber,
 				priceBought, dateBought, folder, condition, printing);
@@ -179,8 +207,20 @@ public class CsvConnection {
 		for (OwnedCard existingCard : ownedRarities) {
 			if (Util.doesCardExactlyMatch(folder, name, setCode, setNumber, condition, printing, priceBought,
 					dateBought, existingCard)) {
-				// exact match found
-				return existingCard;
+				
+				CardSet setIdentified = new CardSet();
+				
+				setIdentified.colorVariant = existingCard.colorVariant;
+				setIdentified.setName = existingCard.setName;
+				setIdentified.setNumber = existingCard.setNumber;
+				setIdentified.id = existingCard.id;
+				setIdentified.setRarity = existingCard.setRarity;
+				setIdentified.rarityUnsure = existingCard.rarityUnsure;
+				
+				OwnedCard card = Util.formOwnedCard(folder, name, quantity, setCode, condition, printing, priceBought,
+						dateBought, setIdentified, priceLow, priceMid, priceMarket);
+				
+				return card;
 			}
 		}
 
@@ -190,7 +230,7 @@ public class CsvConnection {
 		setIdentified.colorVariant = colorCode;
 		
 		OwnedCard card = Util.formOwnedCard(folder, name, quantity, setCode, condition, printing, priceBought,
-				dateBought, setIdentified);
+				dateBought, setIdentified, priceLow, priceMid, priceMarket);
 
 		return card;
 	}
@@ -211,6 +251,10 @@ public class CsvConnection {
 		String rarityColorVariant = current.get("Rarity Color Variant").trim();
 		String rarityUnsure = current.get("Rarity Unsure").trim();
 		Integer wikiID = getIntOrNull(current, "Passcode");
+		
+		String priceLow = Util.normalizePrice(current.get("LOW"));
+		String priceMid = Util.normalizePrice(current.get("MID"));
+		String priceMarket = Util.normalizePrice(current.get("MARKET"));
 
 		if (printing.equals("Foil")) {
 			printing = "1st Edition";
@@ -229,7 +273,7 @@ public class CsvConnection {
 		setIdentified.id = wikiID;
 		
 		OwnedCard card = Util.formOwnedCard(folder, name, quantity, setCode, condition, printing, priceBought,
-				dateBought, setIdentified);
+				dateBought, setIdentified, priceLow, priceMid, priceMarket);
 
 		return card;
 	}
@@ -308,6 +352,8 @@ public class CsvConnection {
 				.replace("1st Edition", "").replace("Condition:", "").replaceAll("\\s", "")
 				.replace("LightlyPlayed", "LightPlayed").replace("ModeratelyPlayed", "Played")
 				.replace("HeavilyPlayed", "Poor").replace("Damaged", "Poor");
+		
+		setName = Util.checkForTranslatedSetName(setName);
 
 		CardSet setIdentified = SQLiteConnection.getCardSetForCardInSet(name, setName);
 
@@ -338,7 +384,7 @@ public class CsvConnection {
 		String dateBought = java.time.LocalDate.now().toString();
 
 		OwnedCard card = Util.formOwnedCard(folder, name, quantity, setCode, condition, printing, priceBought,
-				dateBought, setIdentified);
+				dateBought, setIdentified, null, null, null);
 
 		return card;
 	}
@@ -430,9 +476,10 @@ public class CsvConnection {
 		// p.printRecord("Folder Name","Quantity","Card Name","Set Code","Set
 		// Name","Card Number","Condition","Printing","Price Bought","Date
 		// Bought","Rarity","Rarity Color Variant", "Rarity Unsure","Passcode");
+		// low, mid, market
 		p.printRecord(current.folderName, current.quantity, current.cardName, current.setCode, current.setName,
 				current.setNumber, current.condition, current.editionPrinting, current.priceBought, current.dateBought,
-				current.setRarity, current.colorVariant, current.rarityUnsure, current.id);
+				current.setRarity, current.colorVariant, current.rarityUnsure, current.id, current.priceLow, current.priceMid, current.priceMarket);
 
 	}
 	

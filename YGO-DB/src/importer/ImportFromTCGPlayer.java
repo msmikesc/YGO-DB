@@ -28,8 +28,10 @@ public class ImportFromTCGPlayer {
 
 		Iterator<CSVRecord> it = CsvConnection.getIterator(
 				"C:\\Users\\Mike\\Documents\\GitHub\\YGO-DB\\YGO-DB\\csv\\TCGPlayer.csv", StandardCharsets.UTF_16LE);
-		
+
 		HashMap<String, OwnedCard> map = new HashMap<String, OwnedCard>();
+
+		int count = 0;
 
 		while (it.hasNext()) {
 
@@ -38,6 +40,8 @@ public class ImportFromTCGPlayer {
 			OwnedCard card = CsvConnection.getOwnedCardFromTCGPlayerCSV(current);
 
 			if (card != null) {
+
+				count += card.quantity;
 
 				String key = card.setNumber + Util.normalizePrice(card.priceBought) + card.dateBought + card.folderName
 						+ card.condition + card.editionPrinting;
@@ -68,9 +72,12 @@ public class ImportFromTCGPlayer {
 		for (OwnedCard card : map.values()) {
 			SQLiteConnection.upsertOwnedCardBatch(card);
 		}
+		
+		SQLiteConnection.closeInstance();
+
+		System.out.println("Imported " + count + " cards");
+		System.out.println("Total cards: "+SQLiteConnection.getCountQuantity() + " + " + SQLiteConnection.getCountQuantityManual() + " Manual");
 
 	}
-	
-
 
 }

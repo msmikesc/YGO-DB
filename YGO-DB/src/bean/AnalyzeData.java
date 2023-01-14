@@ -47,6 +47,10 @@ public class AnalyzeData implements Comparable<AnalyzeData> {
 	}
 
 	public String getStringOfSetNames() {
+		
+		if(setName.size() == 0) {
+			return "";
+		}
 
 		ArrayList<String> results = new ArrayList<String>(setName);
 
@@ -64,6 +68,11 @@ public class AnalyzeData implements Comparable<AnalyzeData> {
 	}
 
 	public String getStringOfSetNumbers() {
+		
+		if(setNumber.size() == 0) {
+			return "";
+		}
+		
 		ArrayList<String> results = new ArrayList<String>(setNumber);
 
 		Collections.sort(results);
@@ -80,6 +89,11 @@ public class AnalyzeData implements Comparable<AnalyzeData> {
 	}
 
 	public String getStringOfRarities() {
+		
+		if(setRarities.size() == 0) {
+			return "";
+		}
+		
 		HashSet<Rarity> enumList = new HashSet<Rarity>();
 
 		for (String s : setRarities) {

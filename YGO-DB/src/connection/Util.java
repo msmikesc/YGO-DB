@@ -24,8 +24,45 @@ public class Util {
 	
 	public static String defaultColorVariant = "-1";
 	
+	private static HashMap<String, String> setNameMap = null;
+	
+
+	public static HashMap<String, String> getSetNameMapInstance() {
+		if (setNameMap == null) {
+			setNameMap = new HashMap<String,String>();
+			
+			setNameMap.put("King of Games: Yugi's Legendary Decks", "Yugi's Legendary Decks");
+			setNameMap.put("Yugi'S Legendary Decks", "Yugi's Legendary Decks");
+			setNameMap.put("Legendary Collection 2", "Legendary Collection 2: The Duel Academy Years Mega Pack");
+			setNameMap.put("2018 Mega-Tins Mega Pack", "2018 Mega-Tin Mega Pack");
+			setNameMap.put("2017 Mega-Tins Mega Pack", "2017 Mega-Tin Mega Pack");
+			setNameMap.put("2016 Mega-Tins Mega Pack", "2016 Mega-Tin Mega Pack");
+			setNameMap.put("2015 Mega-Tins Mega Pack", "2015 Mega-Tin Mega Pack");
+			setNameMap.put("2014 Mega-Tins Mega Pack", "2014 Mega-Tin Mega Pack");
+			setNameMap.put("Return of the Duelist SE", "Return of the Duelist: Special Edition");
+			//setNameMap.put("", "");
+		}
+
+		return setNameMap;
+	}
+	
+	
+	public static String checkForTranslatedSetName(String setName) {
+		
+		HashMap<String, String> instance = getSetNameMapInstance();
+		
+		String newSetName = instance.get(setName);
+		
+		if(newSetName == null) {
+			return setName;
+		}
+		
+		return newSetName;
+	}
+	
 	public static OwnedCard formOwnedCard(String folder, String name, String quantity, String setCode, String condition,
-			String printing, String priceBought, String dateBought, CardSet setIdentified) {
+			String printing, String priceBought, String dateBought, CardSet setIdentified, String priceLow, String priceMid,
+			String priceMarket) {
 		OwnedCard card = new OwnedCard();
 		
 		card.folderName = folder;
@@ -42,6 +79,10 @@ public class Util {
 		card.setName = setIdentified.setName;
 		card.setNumber = setIdentified.setNumber;
 		card.rarityUnsure = setIdentified.rarityUnsure;
+		
+		card.priceLow = priceLow;
+		card.priceMid = priceMid;
+		card.priceMarket = priceMarket;
 		
 		return card;
 	}
@@ -90,6 +131,11 @@ public class Util {
 		ArrayList<String> setNames = SQLiteConnection.getDistinctSetNames();
 
 		for (String setName : setNames) {
+			
+			if (setName.contains("Tip Card") || setName.contains("(POR)")) {
+				continue;
+			}
+			
 			SetMetaData meta = SetMetaDataMap.get(setName);
 
 			if (meta == null) {
@@ -108,6 +154,11 @@ public class Util {
 	}
 
 	public static String normalizePrice(String input) {
+		
+		if(input == null || input.trim().equals("")) {
+			return null;
+		}
+		
 		BigDecimal price = new BigDecimal(input);
 
 		price = price.setScale(2, RoundingMode.HALF_UP);
@@ -296,6 +347,13 @@ public class Util {
 		String lastFullString = null;
 		for (String currentCode : cardsInSetList) {
 			String[] splitStrings = currentCode.split("-");
+			
+			if(currentCode.equals("BLAR-EN10K")) {
+				continue;
+			}
+			if(currentCode.contains("ENTKN")) {
+				continue;
+			}
 
 			int numIndex = 0;
 

@@ -28,6 +28,8 @@ public class ImportOwnedCardFromExportedCSV {
 		Iterator<CSVRecord> it = CsvConnection.getIterator(
 				"C:\\Users\\Mike\\Documents\\GitHub\\YGO-DB\\YGO-DB\\csv\\rarity-unsure-export.csv",
 				StandardCharsets.UTF_16LE);
+		
+		int count = 0;
 
 		while (it.hasNext()) {
 
@@ -44,7 +46,10 @@ public class ImportOwnedCardFromExportedCSV {
 						existingCard)) {
 					// exact match found
 					if (existingCard.quantity == card.quantity && existingCard.rarityUnsure == card.rarityUnsure
-							&& existingCard.setRarity.equals(card.setRarity)) {
+							&& existingCard.setRarity.equals(card.setRarity)
+							&& existingCard.priceLow.equals(card.priceLow)
+							&& existingCard.priceMid.equals(card.priceMid)
+							&& existingCard.priceMarket.equals(card.priceMarket)) {
 						// nothing to update
 						card = null;
 						break;
@@ -56,9 +61,14 @@ public class ImportOwnedCardFromExportedCSV {
 			}
 
 			if (card != null) {
+				count += card.quantity;
 				SQLiteConnection.upsertOwnedCardBatch(card);
 			}
 		}
+		
+		SQLiteConnection.closeInstance();
+		
+		System.out.println("Imported " + count + " cards");
 
 	}
 

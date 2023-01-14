@@ -18,5 +18,9 @@ public class OwnedCard {
 	public String priceBought;
 	public String creationDate;
 	public String modificationDate;
+	
+	public String priceLow;
+	public String priceMid;
+	public String priceMarket;
 
 }

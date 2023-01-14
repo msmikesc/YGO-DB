@@ -84,6 +84,10 @@ public class AnalyzeCompareToDragonShieldCSV {
 					System.out.println("Color Code Mismatch on: " + card.cardName + " " +  card.setNumber + " " +  card.setRarity + " " + card.colorVariant + " " + card.priceBought + " " +  card.dateBought);
 				}
 				
+				if(card.quantity != Integer.parseInt(quantity)) {
+					System.out.println("Quantity Mismatch on: " + card.cardName + " " +  card.setNumber + " " +  card.setRarity + " " + card.colorVariant + " " + card.priceBought + " " +  card.dateBought);
+				}
+				
 				databaseList.remove(key);
 			}
 			else {
@@ -92,13 +96,17 @@ public class AnalyzeCompareToDragonShieldCSV {
 
 				for (int i = 0; i < list.size(); i++) {
 
-					OwnedCard existingCard = list.get(i);
+					OwnedCard card = list.get(i);
 
 					if (Util.doesCardExactlyMatchWithColor(folder, name, setCode, setNumber, condition, printing,
-							priceBought, dateBought, colorCode, existingCard)) {
+							priceBought, dateBought, colorCode, card)) {
 						foundMatch = true;
 						list.remove(i);
-
+						
+						if(card.quantity != Integer.parseInt(quantity)) {
+							System.out.println("Quantity Mismatch on: " + card.cardName + " " +  card.setNumber + " " +  card.setRarity + " " + card.colorVariant + " " + card.priceBought + " " +  card.dateBought);
+						}
+						
 						if (list.size() == 0) {
 							databaseList.remove(key);
 						}
@@ -116,8 +124,13 @@ public class AnalyzeCompareToDragonShieldCSV {
 		}
 
 		for(ArrayList<OwnedCard> rarityList: databaseList.values()) {
-			for(OwnedCard card: rarityList) {
-				System.out.println("Card in DB but not in CSV: " + card.cardName + " " +  card.setNumber + " " +  card.setRarity + " " + card.colorVariant + " " + card.priceBought + " " +  card.dateBought);
+			for (OwnedCard card : rarityList) {
+
+				if (!card.folderName.equals("Manual Folder")) {
+					System.out.println(
+							"Card in DB but not in CSV: " + card.cardName + " " + card.setNumber + " " + card.setRarity
+									+ " " + card.colorVariant + " " + card.priceBought + " " + card.dateBought);
+				}
 			}
 		}
 		

@@ -46,7 +46,7 @@ public class ExportUnSyncedForUpload {
 		
 		System.out.println("Exported cards: "+ quantityCount);
 		
-		System.out.println("Total cards: "+SQLiteConnection.getCountQuantity());
+		System.out.println("Total cards: "+SQLiteConnection.getCountQuantity() + " + " + SQLiteConnection.getCountQuantityManual() + " Manual");
 
 		p.flush();
 		p.close();
