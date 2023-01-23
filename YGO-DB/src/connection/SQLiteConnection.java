@@ -600,6 +600,8 @@ public class SQLiteConnection {
 			set.setRarity = rs.getString("setRarity");
 			set.setPrice = rs.getString("setPrice");
 		}
+		
+		//TODO handle multiple options
 
 		rs.close();
 		distrinctQueryStatement.close();
@@ -1009,4 +1011,41 @@ public class SQLiteConnection {
 		statementSetInsert.execute();
 		statementSetInsert.close();
 	}
+	
+	public static void updateSetName(String original, String newName) throws SQLException {
+
+		Connection connection = SQLiteConnection.getInstance();
+
+		String setInsert = "update cardSets set setName = ? where setName = ?";
+
+		PreparedStatement statementSetInsert = connection.prepareStatement(setInsert);
+
+		statementSetInsert.setString(1, newName);
+		statementSetInsert.setString(2, original);
+
+		statementSetInsert.execute();
+		statementSetInsert.close();
+		
+		setInsert = "update ownedCards set setName = ? where setName = ?";
+
+		statementSetInsert = connection.prepareStatement(setInsert);
+
+		statementSetInsert.setString(1, newName);
+		statementSetInsert.setString(2, original);
+
+		statementSetInsert.execute();
+		statementSetInsert.close();
+		
+		setInsert = "update setData set setName = ? where setName = ?";
+
+		statementSetInsert = connection.prepareStatement(setInsert);
+
+		statementSetInsert.setString(1, newName);
+		statementSetInsert.setString(2, original);
+
+		statementSetInsert.execute();
+		statementSetInsert.close();
+	}
+	
+	
 }

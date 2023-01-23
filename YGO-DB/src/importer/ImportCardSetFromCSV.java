@@ -20,7 +20,7 @@ public class ImportCardSetFromCSV {
 
 	public void run() throws SQLException, IOException {
 
-		String csvFileName = "randoms";
+		String csvFileName = "cardsets";
 
 		String fileNameString = "C:\\Users\\Mike\\Documents\\GitHub\\YGO-DB\\YGO-DB\\csv\\" + csvFileName + ".csv";
 

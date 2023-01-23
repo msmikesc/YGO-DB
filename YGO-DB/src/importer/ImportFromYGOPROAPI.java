@@ -148,6 +148,8 @@ public class ImportFromYGOPROAPI {
 			}
 
 			set_price = Util.getAdjustedPriceFromRarity(set_rarity, set_price);
+			
+			set_name = Util.checkForTranslatedSetName(set_name);
 
 			SQLiteConnection.replaceIntoCardSet(set_code, set_rarity, set_name, wikiID, set_price, name);
 
@@ -199,12 +201,14 @@ public class ImportFromYGOPROAPI {
 					String set_code = Util.getStringOrNull(set, "set_code");
 					int num_of_cards = Util.getIntOrNull(set, "num_of_cards");
 					String tcg_date = Util.getStringOrNull(set, "tcg_date");
+					
+					String newSetName = Util.checkForTranslatedSetName(set_name);
 
 					if (!specificSet) {
-						SQLiteConnection.replaceIntoCardSetMetaData(set_name, set_code, num_of_cards, tcg_date);
+						SQLiteConnection.replaceIntoCardSetMetaData(newSetName, set_code, num_of_cards, tcg_date);
 					}
 					if (specificSet && set_name.equalsIgnoreCase(setName)) {
-						SQLiteConnection.replaceIntoCardSetMetaData(set_name, set_code, num_of_cards, tcg_date);
+						SQLiteConnection.replaceIntoCardSetMetaData(newSetName, set_code, num_of_cards, tcg_date);
 						return;
 					}
 				}

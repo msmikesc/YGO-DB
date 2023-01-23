@@ -40,14 +40,62 @@ public class Util {
 			setNameMap.put("2015 Mega-Tins Mega Pack", "2015 Mega-Tin Mega Pack");
 			setNameMap.put("2014 Mega-Tins Mega Pack", "2014 Mega-Tin Mega Pack");
 			setNameMap.put("Return of the Duelist SE", "Return of the Duelist: Special Edition");
+			setNameMap.put("Duelist Pack 7: Jesse Anderson", "Duelist Pack: Jesse Anderson");
+			setNameMap.put("Yu-Gi-Oh! Movie Exclusive Pack", "Exclusive Pack");
+			setNameMap.put("Collectible Tins 2013 Wave 2", "Collectible Tins 2013");
+			setNameMap.put("Collectible Tins 2012 Wave 2", "Collectible Tins 2012");
+			setNameMap.put("Collectible Tins 2011 Wave 2", "Collectible Tins 2011");
+			setNameMap.put("Collectible Tins 2006 Wave 2", "Collectible Tins 2006");
+			setNameMap.put("Collectible Tins 2007 Wave 2", "Collectible Tins 2007");
+			setNameMap.put("Collectible Tins 2008 Wave 2", "Collectible Tins 2008");
+			setNameMap.put("Collectible Tins 2009 Wave 2", "Collectible Tins 2009");
+			setNameMap.put("Collectible Tins 2010 Wave 2", "Collectible Tins 2010");
+			setNameMap.put("Collectible Tins 2013 Wave 1", "Collectible Tins 2013");
+			setNameMap.put("Collectible Tins 2012 Wave 1", "Collectible Tins 2012");
+			setNameMap.put("Collectible Tins 2011 Wave 1", "Collectible Tins 2011");
+			setNameMap.put("Collectible Tins 2006 Wave 1", "Collectible Tins 2006");
+			setNameMap.put("Collectible Tins 2007 Wave 1", "Collectible Tins 2007");
+			setNameMap.put("Collectible Tins 2008 Wave 1", "Collectible Tins 2008");
+			setNameMap.put("Collectible Tins 2009 Wave 1", "Collectible Tins 2009");
+			setNameMap.put("Collectible Tins 2010 Wave 1", "Collectible Tins 2010");
+			setNameMap.put("2013 Collectible Tins", "Collectible Tins 2013");
+			setNameMap.put("2012 Collectible Tins", "Collectible Tins 2012");
+			setNameMap.put("2011 Collectible Tins", "Collectible Tins 2011");
+			setNameMap.put("2006 Collectible Tins", "Collectible Tins 2006");
+			setNameMap.put("2007 Collectible Tins", "Collectible Tins 2007");
+			setNameMap.put("2008 Collectible Tins", "Collectible Tins 2008");
+			setNameMap.put("2009 Collectible Tins", "Collectible Tins 2009");
+			setNameMap.put("2010 Collectible Tins", "Collectible Tins 2010");
+			setNameMap.put("Collectible Tins 2012 Wave 2.5", "Collectible Tins 2012");
+			setNameMap.put("2013 Collectible Tins Wave 1", "Collectible Tins 2013");
+			setNameMap.put("2013 Collectible Tins Wave 2", "Collectible Tins 2013");
 			//setNameMap.put("", "");
+			
 		}
 
 		return setNameMap;
 	}
 	
+	public static String flipStructureEnding(String input, String match) {
+		
+		input = input.trim();
+		
+		if(input.endsWith(match)) {
+			input = match + ": " + input.replace(match, "").trim();
+		}
+		return input;
+		
+	}
+	
 	
 	public static String checkForTranslatedSetName(String setName) {
+		
+		if(setName.contains("The Lost Art Promotion")) {
+			setName = "The Lost Art Promotion";
+		}
+		
+		setName = flipStructureEnding(setName, "Starter Deck");
+		setName = flipStructureEnding(setName, "Structure Deck");
 		
 		HashMap<String, String> instance = getSetNameMapInstance();
 		

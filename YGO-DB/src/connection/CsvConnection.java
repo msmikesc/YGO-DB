@@ -453,6 +453,8 @@ public class CsvConnection {
 		} catch (Exception e) {
 			setName = defaultSetName;
 		}
+		
+		setName = Util.checkForTranslatedSetName(setName);
 
 		int wikiID = SQLiteConnection.getCardIdFromTitle(name);
 		// try skill card
