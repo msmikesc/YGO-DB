@@ -27,8 +27,8 @@ public class ImportFromYGOPRO {
 		try {
 			s = FileUtils.readFileToString(f, StandardCharsets.UTF_8);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			System.exit(1);
 		}
 
 		JSONObject jo = new JSONObject(s);
@@ -84,8 +84,8 @@ public class ImportFromYGOPRO {
 		Integer def = Util.getIntOrNull(current, "def");
 		String archetype = Util.getStringOrNull(current, "archetype");
 
-		SQLiteConnection.replaceIntoGamePlayCard(wikiID, name, type, passcode, desc, attribute, race, linkval, level,
-				scale, atk, def, archetype);
+		//SQLiteConnection.replaceIntoGamePlayCard(wikiID, name, type, passcode, desc, attribute, race, linkval, level,
+		//		scale, atk, def, archetype);
 	}
 
 	public static void insertCardSetsForOneCard(JSONArray sets, Iterator<Object> setIteraor, String name, int wikiID)

@@ -38,7 +38,10 @@ public class ExportUnSyncedForUpload {
 				quantityCount += current.quantity;
 
 				if (current.folderName.equals("UnSynced Folder")) {
-					SQLiteConnection.updateFolderForOwnedCard("Sync Folder", current);
+					
+					current.folderName = "Sync Folder";
+					
+					SQLiteConnection.UpdateOwnedCardByUUID(current);
 				}
 
 			}

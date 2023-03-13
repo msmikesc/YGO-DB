@@ -59,6 +59,7 @@ public class ImportFromTCGPlayer {
 								card.setNumber, card.condition, card.editionPrinting, card.priceBought, card.dateBought,
 								card.colorVariant, existingCard)) {
 							card.quantity += existingCard.quantity;
+							card.UUID = existingCard.UUID;
 							break;
 						}
 					}

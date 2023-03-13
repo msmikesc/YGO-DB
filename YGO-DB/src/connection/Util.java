@@ -5,6 +5,8 @@ import java.math.RoundingMode;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.UUID;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -25,6 +27,7 @@ public class Util {
 	public static String defaultColorVariant = "-1";
 	
 	private static HashMap<String, String> setNameMap = null;
+	private static HashMap<String, String> rarityMap = null;
 	
 
 	public static HashMap<String, String> getSetNameMapInstance() {
@@ -66,14 +69,59 @@ public class Util {
 			setNameMap.put("2008 Collectible Tins", "Collectible Tins 2008");
 			setNameMap.put("2009 Collectible Tins", "Collectible Tins 2009");
 			setNameMap.put("2010 Collectible Tins", "Collectible Tins 2010");
+			setNameMap.put("2013 Collectors Tins", "Collectible Tins 2013");
+			setNameMap.put("2012 Collectors Tins", "Collectible Tins 2012");
+			setNameMap.put("2011 Collectors Tins", "Collectible Tins 2011");
+			setNameMap.put("2006 Collectors Tins", "Collectible Tins 2006");
+			setNameMap.put("2007 Collectors Tins", "Collectible Tins 2007");
+			setNameMap.put("2008 Collectors Tins", "Collectible Tins 2008");
+			setNameMap.put("2009 Collectors Tins", "Collectible Tins 2009");
+			setNameMap.put("2010 Collectors Tins", "Collectible Tins 2010");
 			setNameMap.put("Collectible Tins 2012 Wave 2.5", "Collectible Tins 2012");
 			setNameMap.put("2013 Collectible Tins Wave 1", "Collectible Tins 2013");
 			setNameMap.put("2013 Collectible Tins Wave 2", "Collectible Tins 2013");
+			setNameMap.put("Duelist Pack 8: Yusei Fudo", "Duelist Pack: Yusei");
+			setNameMap.put("Duelist Pack Collection Tin", "Duelist Pack Collection Tin 2009");
+			setNameMap.put("2006 Collectors Tin", "Collectible Tins 2006");
+			setNameMap.put("2007 Collectors Tin", "Collectible Tins 2007");
+			setNameMap.put("2008 Collectors Tin", "Collectible Tins 2008");
+			setNameMap.put("2009 Collectors Tin", "Collectible Tins 2009");
+			setNameMap.put("2010 Collectors Tin", "Collectible Tins 2010");
+			setNameMap.put("2011 Collectors Tin", "Collectible Tins 2011");
+			setNameMap.put("2012 Collectors Tin", "Collectible Tins 2012");
+			setNameMap.put("2013 Collectors Tin", "Collectible Tins 2013");
+			setNameMap.put("2020 Tin of Lost Memories", "2020 Tin of Lost Memories Mega Pack");
+			setNameMap.put("Duel Terminal 5a", "Duel Terminal 5");
+			setNameMap.put("Duel Terminal 5b", "Duel Terminal 5");
+			setNameMap.put("Duel Terminal 6a", "Duel Terminal 6");
+			setNameMap.put("Duel Terminal 6b", "Duel Terminal 6");
+			setNameMap.put("Duel Terminal 7a", "Duel Terminal 7");
+			setNameMap.put("Duel Terminal 7b", "Duel Terminal 7");
+			
 			//setNameMap.put("", "");
 			
 		}
 
 		return setNameMap;
+	}
+	
+	public static HashMap<String, String> getRarityMapInstance() {
+		if (rarityMap == null) {
+			rarityMap = new HashMap<String,String>();
+			
+			rarityMap.put("Collectors Rare", "Collector's Rare");
+			rarityMap.put("URPR", "Ultra Rare (Pharaoh's Rare)");
+			rarityMap.put("Super Short Print", "Short Print");
+			rarityMap.put("Duel Terminal Technology Common", "Duel Terminal Normal Parallel Rare");
+			rarityMap.put("Secret Pharaoh’s Rare", "Secret Rare (Pharaoh's Rare)");
+			rarityMap.put("Ultra Pharaoh’s Rare", "Ultra Rare (Pharaoh's Rare)");
+			rarityMap.put("Duel Terminal Technology Ultra Rare", "Duel Terminal Ultra Parallel Rare");
+			
+			//rarityMap.put("", "");
+			
+		}
+
+		return rarityMap;
 	}
 	
 	public static String flipStructureEnding(String input, String match) {
@@ -108,6 +156,18 @@ public class Util {
 		return newSetName;
 	}
 	
+	public static String checkForTranslatedRarity(String rarity) {
+		HashMap<String, String> instance = getRarityMapInstance();
+		
+		String newRarity = instance.get(rarity);
+		
+		if(newRarity == null) {
+			return rarity;
+		}
+		
+		return newRarity;
+	}
+	
 	public static OwnedCard formOwnedCard(String folder, String name, String quantity, String setCode, String condition,
 			String printing, String priceBought, String dateBought, CardSet setIdentified, String priceLow, String priceMid,
 			String priceMarket) {
@@ -131,6 +191,7 @@ public class Util {
 		card.priceLow = priceLow;
 		card.priceMid = priceMid;
 		card.priceMarket = priceMarket;
+		card.UUID = UUID.randomUUID().toString();
 		
 		return card;
 	}
@@ -159,7 +220,7 @@ public class Util {
 	}
 
 	public static void checkSetCounts() throws SQLException {
-		ArrayList<SetMetaData> list = SQLiteConnection.getSetMetaDataFromSetData();
+		ArrayList<SetMetaData> list = SQLiteConnection.getAllSetMetaDataFromSetData();
 
 		for (SetMetaData setData : list) {
 			int countCardsinList = SQLiteConnection.getCountDistinctCardsInSet(setData.set_name);
@@ -207,7 +268,15 @@ public class Util {
 			return null;
 		}
 		
-		BigDecimal price = new BigDecimal(input);
+		BigDecimal price;
+		
+		try {
+			price = new BigDecimal(input.replace(",", ""));
+		}
+		catch(Exception e) {
+			System.out.println("Invalid price input:" + input);
+			price = new BigDecimal("0");
+		}
 
 		price = price.setScale(2, RoundingMode.HALF_UP);
 
@@ -383,6 +452,18 @@ public class Util {
 
 		return price.toString();
 
+	}
+	
+	public static void checkForIssuesWithCardNamesInSet(String setName) throws SQLException {
+		ArrayList<Integer> list = SQLiteConnection.getDistinctCardIDsInSetByName(setName);
+		for (int i : list) {
+			String title = SQLiteConnection.getCardTitleFromID(i);
+			
+			if(title == null) {
+				System.out.println("Not exactly 1 gameplaycard found for ID " + i);
+			}
+			
+		}
 	}
 
 	public static void checkForIssuesWithSet(String setName) throws SQLException {

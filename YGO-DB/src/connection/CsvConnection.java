@@ -21,6 +21,7 @@ import org.apache.commons.csv.CSVRecord;
 
 import analyze.AnalyzeCompareToDragonShieldCSV;
 import bean.CardSet;
+import bean.GamePlayCard;
 import bean.OwnedCard;
 import bean.SetMetaData;
 
@@ -74,12 +75,11 @@ public class CsvConnection {
 
 			p.printRecord("Folder Name", "Quantity", "Card Name", "Set Code", "Set Name", "Card Number", "Condition",
 					"Printing", "Price Bought", "Date Bought", "Rarity", "Rarity Color Variant", "Rarity Unsure",
-					"Passcode", "LOW", "MID", "MARKET");
+					"Passcode", "LOW", "MID", "MARKET", "UUID");
 
 			return p;
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;
 		}
@@ -99,7 +99,6 @@ public class CsvConnection {
 			return p;
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;
 		}
@@ -117,7 +116,6 @@ public class CsvConnection {
 			return p;
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;
 		}
@@ -136,7 +134,6 @@ public class CsvConnection {
 			return p;
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;
 		}
@@ -154,7 +151,6 @@ public class CsvConnection {
 			return p;
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;
 		}
@@ -220,6 +216,8 @@ public class CsvConnection {
 				OwnedCard card = Util.formOwnedCard(folder, name, quantity, setCode, condition, printing, priceBought,
 						dateBought, setIdentified, priceLow, priceMid, priceMarket);
 				
+				card.UUID = existingCard.UUID;
+				
 				return card;
 			}
 		}
@@ -255,6 +253,8 @@ public class CsvConnection {
 		String priceLow = Util.normalizePrice(current.get("LOW"));
 		String priceMid = Util.normalizePrice(current.get("MID"));
 		String priceMarket = Util.normalizePrice(current.get("MARKET"));
+		
+		String UUID = current.get("UUID");
 
 		if (printing.equals("Foil")) {
 			printing = "1st Edition";
@@ -274,6 +274,8 @@ public class CsvConnection {
 		
 		OwnedCard card = Util.formOwnedCard(folder, name, quantity, setCode, condition, printing, priceBought,
 				dateBought, setIdentified, priceLow, priceMid, priceMarket);
+		
+		card.UUID = UUID;
 
 		return card;
 	}
@@ -355,7 +357,7 @@ public class CsvConnection {
 		
 		setName = Util.checkForTranslatedSetName(setName);
 
-		CardSet setIdentified = SQLiteConnection.getCardSetForCardInSet(name, setName);
+		CardSet setIdentified = SQLiteConnection.getFirstCardSetForCardInSet(name, setName);
 
 		if (setIdentified == null) {
 			System.out.println("Unknown setCode for card name and set: " + name + ":" + setName);
@@ -429,15 +431,30 @@ public class CsvConnection {
 		String lore = getStringOrNull(current, "Card Text");
 		String attribute = getStringOrNull(current, "Attribute");
 		String race = getStringOrNull(current, "Race");
-		Integer linkValue = getIntOrNull(current, "Link Value");
-		Integer pendScale = getIntOrNull(current, "Pendulum Scale");
-		Integer level = getIntOrNull(current, "Level/Rank");
-		Integer atk = getIntOrNull(current, "Attack");
-		Integer def = getIntOrNull(current, "Defense");
+		String linkValue = getStringOrNull(current, "Link Value");
+		String pendScale = getStringOrNull(current, "Pendulum Scale");
+		String level = getStringOrNull(current, "Level/Rank");
+		String atk = getStringOrNull(current, "Attack");
+		String def = getStringOrNull(current, "Defense");
 		String archetype = getStringOrNull(current, "Archetype");
+		
+		GamePlayCard GPC = new GamePlayCard();
+		
+		GPC.cardName = name;
+		GPC.cardType = type;
+		GPC.archetype = archetype;
+		GPC.passcode = passcode;
+		GPC.wikiID = passcode;
+		GPC.desc = lore;
+		GPC.attribute = attribute;
+		GPC.race = race;
+		GPC.linkval = linkValue;
+		GPC.scale = pendScale;
+		GPC.level = level;
+		GPC.atk = atk;
+		GPC.def = def;
 
-		SQLiteConnection.replaceIntoGamePlayCard(passcode, name, type, passcode, lore, attribute, race, linkValue,
-				pendScale, level, atk, def, archetype);
+		SQLiteConnection.replaceIntoGamePlayCard(GPC);
 	}
 
 	public static void insertCardSetFromCSV(CSVRecord current, String defaultSetName) throws SQLException {
@@ -481,7 +498,8 @@ public class CsvConnection {
 		// low, mid, market
 		p.printRecord(current.folderName, current.quantity, current.cardName, current.setCode, current.setName,
 				current.setNumber, current.condition, current.editionPrinting, current.priceBought, current.dateBought,
-				current.setRarity, current.colorVariant, current.rarityUnsure, current.id, current.priceLow, current.priceMid, current.priceMarket);
+				current.setRarity, current.colorVariant, current.rarityUnsure, current.id, current.priceLow, current.priceMid, 
+				current.priceMarket, current.UUID);
 
 	}
 	
@@ -489,8 +507,10 @@ public class CsvConnection {
 		// Folder Name	Quantity	Trade Quantity	Card Name	Set Code	Set Name	Card Number	
 		//Condition	Printing	Language	Price Bought	Date Bought	LOW	MID	MARKET
 		
-		if(current.editionPrinting.equals("1st Edition")) {
-			current.editionPrinting = "Foil";
+		String printing = current.editionPrinting;
+		
+		if(printing.equals("1st Edition")) {
+			printing = "Foil";
 		}
 		
 		String outputSetNumber = current.setNumber;
@@ -501,7 +521,7 @@ public class CsvConnection {
 		}
 
 		p.printRecord(current.folderName, current.quantity,0, current.cardName, current.setCode, current.setName,
-				outputSetNumber, current.condition, current.editionPrinting, "English", current.priceBought, current.dateBought,
+				outputSetNumber, current.condition, printing, "English", current.priceBought, current.dateBought,
 				0, 0, 0);
 
 	}

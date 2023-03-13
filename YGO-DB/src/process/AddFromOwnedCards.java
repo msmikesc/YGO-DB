@@ -39,9 +39,15 @@ public class AddFromOwnedCards {
 				} else {
 					// add it
 					System.out.println("No gamePlayCard found for " + card.cardName + ":" + card.id);
+					
+					GamePlayCard GPC = new GamePlayCard();
+					
+					GPC.cardName = card.cardName;
+					GPC.cardType = "unknown";
+					GPC.passcode = card.id;
+					GPC.wikiID = card.id;
 
-					SQLiteConnection.replaceIntoGamePlayCard(card.id, card.cardName, "unknown", card.id, null, null,
-							null, null, null, null, null, null, null);
+					SQLiteConnection.replaceIntoGamePlayCard(GPC);
 
 				}
 			}

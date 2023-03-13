@@ -18,8 +18,9 @@ import connection.SQLiteConnection;
 import connection.Util;
 
 public class AnalyzeCompareToDragonShieldCSV {
-	
-	public static final List<String> setColorVariantUnsupportedDragonShield = Arrays.asList("Legendary Duelists: Season 2");
+
+	public static final List<String> setColorVariantUnsupportedDragonShield = Arrays
+			.asList("Legendary Duelists: Season 2");
 
 	public static void main(String[] args) throws SQLException, IOException {
 		AnalyzeCompareToDragonShieldCSV mainObj = new AnalyzeCompareToDragonShieldCSV();
@@ -32,7 +33,7 @@ public class AnalyzeCompareToDragonShieldCSV {
 
 		Iterator<CSVRecord> it = CsvConnection.getIteratorSkipFirstLine(
 				"C:\\Users\\Mike\\Documents\\GitHub\\YGO-DB\\YGO-DB\\csv\\all-folders.csv", StandardCharsets.UTF_16LE);
-		
+
 		HashMap<String, ArrayList<OwnedCard>> databaseList = DatabaseHashMap.getOwnedInstance();
 
 		while (it.hasNext()) {
@@ -49,48 +50,49 @@ public class AnalyzeCompareToDragonShieldCSV {
 			String printing = current.get("Printing").trim();
 			String priceBought = Util.normalizePrice(current.get("Price Bought"));
 			String dateBought = current.get("Date Bought").trim();
-			
+
 			String colorCode = Util.defaultColorVariant;
 
 			if (printing.equals("Foil")) {
 				printing = "1st Edition";
 			}
-			
-			String key = setNumber + Util.normalizePrice(priceBought) + dateBought + folder + condition
-					+ printing;
+
+			String key = setNumber + Util.normalizePrice(priceBought) + dateBought + folder + condition + printing;
 
 			ArrayList<OwnedCard> list = databaseList.get(key);
-			
-			if(list == null) {
-				//try removing color code
-				colorCode = setNumber.substring( setNumber.length() - 1, setNumber.length());
+
+			if (list == null) {
+				// try removing color code
+				colorCode = setNumber.substring(setNumber.length() - 1, setNumber.length());
 				setNumber = setNumber.substring(0, setNumber.length() - 1);
-				
-				key = setNumber + Util.normalizePrice(priceBought) + dateBought + folder + condition
-						+ printing;
+
+				key = setNumber + Util.normalizePrice(priceBought) + dateBought + folder + condition + printing;
 
 				list = databaseList.get(key);
 			}
-			
-			if(list == null) {
+
+			if (list == null) {
 				System.out.println("no match in DB found forkey : " + key);
-			}
-			else if(list.size() == 1) {
-				//exact 1 match
-				
+			} else if (list.size() == 1) {
+				// exact 1 match
+
 				OwnedCard card = list.get(0);
-				
-				if(!colorCode.equalsIgnoreCase(list.get(0).colorVariant) && !setColorVariantUnsupportedDragonShield.contains(card.setName)) {
-					System.out.println("Color Code Mismatch on: " + card.cardName + " " +  card.setNumber + " " +  card.setRarity + " " + card.colorVariant + " " + card.priceBought + " " +  card.dateBought);
+
+				if (!colorCode.equalsIgnoreCase(list.get(0).colorVariant)
+						&& !setColorVariantUnsupportedDragonShield.contains(card.setName)) {
+					System.out.println(
+							"Color Code Mismatch on: " + card.cardName + " " + card.setNumber + " " + card.setRarity
+									+ " " + card.colorVariant + " " + card.priceBought + " " + card.dateBought);
 				}
-				
-				if(card.quantity != Integer.parseInt(quantity)) {
-					System.out.println("Quantity Mismatch on: " + card.cardName + " " +  card.setNumber + " " +  card.setRarity + " " + card.colorVariant + " " + card.priceBought + " " +  card.dateBought);
+
+				if (card.quantity != Integer.parseInt(quantity)) {
+					System.out.println(
+							"Quantity Mismatch on: " + card.cardName + " " + card.setNumber + " " + card.setRarity + " "
+									+ card.colorVariant + " " + card.priceBought + " " + card.dateBought);
 				}
-				
+
 				databaseList.remove(key);
-			}
-			else {
+			} else {
 
 				boolean foundMatch = false;
 
@@ -102,11 +104,13 @@ public class AnalyzeCompareToDragonShieldCSV {
 							priceBought, dateBought, colorCode, card)) {
 						foundMatch = true;
 						list.remove(i);
-						
-						if(card.quantity != Integer.parseInt(quantity)) {
-							System.out.println("Quantity Mismatch on: " + card.cardName + " " +  card.setNumber + " " +  card.setRarity + " " + card.colorVariant + " " + card.priceBought + " " +  card.dateBought);
+
+						if (card.quantity != Integer.parseInt(quantity)) {
+							System.out.println("Quantity Mismatch on: " + card.cardName + " " + card.setNumber + " "
+									+ card.setRarity + " " + card.colorVariant + " " + card.priceBought + " "
+									+ card.dateBought);
 						}
-						
+
 						if (list.size() == 0) {
 							databaseList.remove(key);
 						}
@@ -123,7 +127,7 @@ public class AnalyzeCompareToDragonShieldCSV {
 
 		}
 
-		for(ArrayList<OwnedCard> rarityList: databaseList.values()) {
+		for (ArrayList<OwnedCard> rarityList : databaseList.values()) {
 			for (OwnedCard card : rarityList) {
 
 				if (!card.folderName.equals("Manual Folder")) {
@@ -133,8 +137,7 @@ public class AnalyzeCompareToDragonShieldCSV {
 				}
 			}
 		}
-		
-		
+
 	}
 
 }

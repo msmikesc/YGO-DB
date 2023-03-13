@@ -4,15 +4,19 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Scanner;
 
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import bean.GamePlayCard;
+import bean.SetMetaData;
 import connection.SQLiteConnection;
 import connection.Util;
-
-import java.sql.SQLException;
 
 public class ImportFromYGOPROAPI {
 
@@ -25,7 +29,7 @@ public class ImportFromYGOPROAPI {
 
 	public void run() throws SQLException, IOException {
 
-		String setName = "Structure Deck: Dark World";
+		String setName = "Maze of Memories";
 
 		setName = setName.trim();
 
@@ -114,15 +118,30 @@ public class ImportFromYGOPROAPI {
 		String desc = Util.getStringOrNull(current, "desc");
 		String attribute = Util.getStringOrNull(current, "attribute");
 		String race = Util.getStringOrNull(current, "race");
-		Integer linkval = Util.getIntOrNull(current, "linkval");
-		Integer level = Util.getIntOrNull(current, "level");
-		Integer scale = Util.getIntOrNull(current, "scale");
-		Integer atk = Util.getIntOrNull(current, "atk");
-		Integer def = Util.getIntOrNull(current, "def");
+		String linkval = Util.getStringOrNull(current, "linkval");
+		String level = Util.getStringOrNull(current, "level");
+		String scale = Util.getStringOrNull(current, "scale");
+		String atk = Util.getStringOrNull(current, "atk");
+		String def = Util.getStringOrNull(current, "def");
 		String archetype = Util.getStringOrNull(current, "archetype");
+		
+		GamePlayCard GPC = new GamePlayCard();
+		
+		GPC.cardName = name;
+		GPC.cardType = type;
+		GPC.archetype = archetype;
+		GPC.passcode = passcode;
+		GPC.wikiID = wikiID;
+		GPC.desc = desc;
+		GPC.attribute = attribute;
+		GPC.race = race;
+		GPC.linkval = linkval;
+		GPC.scale = scale;
+		GPC.level = level;
+		GPC.atk = atk;
+		GPC.def = def;
 
-		SQLiteConnection.replaceIntoGamePlayCard(wikiID, name, type, passcode, desc, attribute, race, linkval, level,
-				scale, atk, def, archetype);
+		SQLiteConnection.replaceIntoGamePlayCard(GPC);
 	}
 
 	public static void insertCardSetsForOneCard(JSONArray sets, Iterator<Object> setIteraor, String name, int wikiID)
@@ -193,6 +212,13 @@ public class ImportFromYGOPROAPI {
 				JSONArray array = new JSONArray(inline);
 
 				inline = null;
+				
+				ArrayList<SetMetaData> list = SQLiteConnection.getAllSetMetaDataFromSetData();
+				ArrayList<String> dbSetNames = new ArrayList<String>();
+				
+				for(SetMetaData current : list) {
+					dbSetNames.add(current.set_name);
+				}
 
 				for (Object setObject : array) {
 					JSONObject set = (JSONObject) setObject;
@@ -203,13 +229,16 @@ public class ImportFromYGOPROAPI {
 					String tcg_date = Util.getStringOrNull(set, "tcg_date");
 					
 					String newSetName = Util.checkForTranslatedSetName(set_name);
+					
+					if(!dbSetNames.contains(newSetName)) {
+						System.out.println("Missing Set: "+ newSetName);
+					}
 
 					if (!specificSet) {
 						SQLiteConnection.replaceIntoCardSetMetaData(newSetName, set_code, num_of_cards, tcg_date);
 					}
 					if (specificSet && set_name.equalsIgnoreCase(setName)) {
 						SQLiteConnection.replaceIntoCardSetMetaData(newSetName, set_code, num_of_cards, tcg_date);
-						return;
 					}
 				}
 

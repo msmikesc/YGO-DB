@@ -32,10 +32,12 @@ public enum Rarity {
 	UltraSecretRare("Ultra Secret Rare"),
 	DuelTerminalNormalRareParallelRare("Duel Terminal Normal Rare Parallel Rare"),
 	SecretRareTenThousand("10000 Secret Rare"),
-	UltraRarePharohsRare("URPR"),
+	UltraRarePharohsRare("Ultra Rare (Pharaoh's Rare)"),
+	SecretRarePharohsRare("Secret Rare (Pharaoh's Rare)"),
 	StarlightRare("Starlight Rare"),
 	GhostRare("Ghost Rare"),
-	UltimateRare("Ultimate Rare");
+	UltimateRare("Ultimate Rare"),
+	nullRarity("nullRarity");
 
 	private String name;
 
@@ -53,7 +55,7 @@ public enum Rarity {
                 return b;
             }
         }
-        return null;
+        return nullRarity;
     }
 
 }

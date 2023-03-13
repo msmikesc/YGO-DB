@@ -20,7 +20,7 @@ public class UpdateSetNames {
 
 		ArrayList<String> setsList = SQLiteConnection.getDistinctSetNames();
 		
-		ArrayList<SetMetaData> metaData = SQLiteConnection.getSetMetaDataFromSetData();
+		ArrayList<SetMetaData> metaData = SQLiteConnection.getAllSetMetaDataFromSetData();
 		
 		for(SetMetaData meta: metaData) {
 			if(!setsList.contains(meta.set_name)) {

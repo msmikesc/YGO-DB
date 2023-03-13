@@ -22,5 +22,6 @@ public class OwnedCard {
 	public String priceLow;
 	public String priceMid;
 	public String priceMarket;
+	public String UUID;
 
 }

@@ -22,8 +22,8 @@ public class ImportFromWikiDownloader {
 					.getConnection("jdbc:sqlite:C:\\Users\\Mike\\eclipse-workspace\\ygodb\\YGO-DB\\YGO-DB.db");
 
 		} catch (SQLException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
+			System.exit(1);
 		}
 
 		File f = new File("C:\\Users\\Mike\\Documents\\GitHub\\Yugioh-Database-Downloader\\src\\cards.json");
@@ -31,8 +31,8 @@ public class ImportFromWikiDownloader {
 		try {
 			s = FileUtils.readFileToString(f, StandardCharsets.UTF_8);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			System.exit(1);
 		}
 
 		JSONObject jo = new JSONObject(s);

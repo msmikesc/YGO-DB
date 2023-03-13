@@ -23,7 +23,7 @@ public class SQLiteConnection {
 	public static Connection getInstance() throws SQLException {
 		if (connection == null) {
 			connection = DriverManager
-					.getConnection("jdbc:sqlite:C:\\Users\\Mike\\Documents\\GitHub\\YGO-DB\\YGO-DB\\YGO-DB.db");
+					.getConnection("jdbc:sqlite:C:\\Users\\Mike\\Documents\\GitHub\\YGO-DB\\YGO-DB\\db\\YGO-DB.db");
 		}
 
 		return connection;
@@ -82,6 +82,7 @@ public class SQLiteConnection {
 	}
 
 	public static ArrayList<CardSet> getAllRaritiesOfCardByID(int id) throws SQLException {
+		//TODO add name?
 
 		Connection connection = SQLiteConnection.getInstance();
 
@@ -111,8 +112,72 @@ public class SQLiteConnection {
 
 		return setRarities;
 	}
+	
+	public static ArrayList<CardSet> getAllCardSetsOfCardByIDAndSet(int id, String setName) throws SQLException {
+
+		Connection connection = SQLiteConnection.getInstance();
+
+		String setQuery = "Select * from cardSets where wikiID=? and setName = ?";
+
+		PreparedStatement statementSetQuery = connection.prepareStatement(setQuery);
+		statementSetQuery.setInt(1, id);
+		statementSetQuery.setString(2, setName);
+
+		ResultSet rarities = statementSetQuery.executeQuery();
+
+		ArrayList<CardSet> setRarities = new ArrayList<CardSet>();
+
+		while (rarities.next()) {
+			CardSet set = new CardSet();
+			set.id = rarities.getInt("wikiID");
+			set.cardName = rarities.getString("cardName");
+			set.setNumber = rarities.getString("setNumber");
+			set.setName = rarities.getString("setName");
+			set.setRarity = rarities.getString("setRarity");
+			set.setPrice = rarities.getString("setPrice");
+
+			setRarities.add(set);
+		}
+
+		statementSetQuery.close();
+		rarities.close();
+
+		return setRarities;
+	}
+	
+	public static ArrayList<CardSet> getAllCardSetsOfCardBySetNumber(String setNumber) throws SQLException {
+
+		Connection connection = SQLiteConnection.getInstance();
+
+		String setQuery = "Select * from cardSets where setNumber = ?";
+
+		PreparedStatement statementSetQuery = connection.prepareStatement(setQuery);
+		statementSetQuery.setString(1, setNumber);
+
+		ResultSet rarities = statementSetQuery.executeQuery();
+
+		ArrayList<CardSet> setRarities = new ArrayList<CardSet>();
+
+		while (rarities.next()) {
+			CardSet set = new CardSet();
+			set.id = rarities.getInt("wikiID");
+			set.cardName = rarities.getString("cardName");
+			set.setNumber = rarities.getString("setNumber");
+			set.setName = rarities.getString("setName");
+			set.setRarity = rarities.getString("setRarity");
+			set.setPrice = rarities.getString("setPrice");
+
+			setRarities.add(set);
+		}
+
+		statementSetQuery.close();
+		rarities.close();
+
+		return setRarities;
+	}
 
 	public static ArrayList<CardSet> getRaritiesOfCardInSetByID(int id, String setName) throws SQLException {
+		//TODO add name?
 
 		Connection connection = SQLiteConnection.getInstance();
 
@@ -207,6 +272,31 @@ public class SQLiteConnection {
 
 		return null;
 	}
+	
+	public static ArrayList<String> getMultiCardTitlesFromID(int wikiID) throws SQLException {
+
+		Connection connection = SQLiteConnection.getInstance();
+
+		String setQuery = "Select * from gamePlayCard where wikiID=?";
+
+		PreparedStatement statementSetQuery = connection.prepareStatement(setQuery);
+		statementSetQuery.setInt(1, wikiID);
+
+		ResultSet rarities = statementSetQuery.executeQuery();
+
+		ArrayList<String> titlesFound = new ArrayList<String>();
+
+		while (rarities.next()) {
+
+			titlesFound.add(rarities.getString("title"));
+
+		}
+
+		statementSetQuery.close();
+		rarities.close();
+
+		return titlesFound;
+	}
 
 	public static int getCardIdFromTitle(String title) throws SQLException {
 
@@ -240,6 +330,8 @@ public class SQLiteConnection {
 	}
 
 	public static ArrayList<OwnedCard> getNumberOfOwnedCardsById(int id) throws SQLException {
+		//TODO add name?
+		
 		Connection connection = SQLiteConnection.getInstance();
 
 		String setQuery = "select sum(quantity), cardName from ownedCards where wikiID = ? group by cardName";
@@ -297,13 +389,62 @@ public class SQLiteConnection {
 			current.condition = rs.getString("condition");
 			current.editionPrinting = rs.getString("editionPrinting");
 			current.dateBought = rs.getString("dateBought");
-			current.priceBought = rs.getString("priceBought");
+			current.priceBought = Util.normalizePrice(rs.getString("priceBought"));
 			current.creationDate = rs.getString("creationDate");
 			current.modificationDate = rs.getString("modificationDate");
 			
 			current.priceLow = rs.getString("priceLow");
 			current.priceMid = rs.getString("priceMid");
 			current.priceMarket = rs.getString("priceMarket");
+			
+			current.UUID = rs.getString("UUID");
+
+			cardsInSetList.add(current);
+		}
+
+		rs.close();
+		setQueryStatement.close();
+
+		return cardsInSetList;
+	}
+	
+	public static ArrayList<OwnedCard> getAllOwnedCardsWithoutSetCode() throws SQLException {
+		Connection connection = SQLiteConnection.getInstance();
+
+		String setQuery = "select * from ownedCards where setCode is null";
+
+		PreparedStatement setQueryStatement = connection.prepareStatement(setQuery);
+
+		ResultSet rs = setQueryStatement.executeQuery();
+
+		ArrayList<OwnedCard> cardsInSetList = new ArrayList<OwnedCard>();
+
+		while (rs.next()) {
+
+			OwnedCard current = new OwnedCard();
+
+			current.id = rs.getInt("wikiID");
+			current.rarityUnsure = rs.getInt("rarityUnsure");
+			current.quantity = rs.getInt("quantity");
+			current.cardName = rs.getString("cardName");
+			current.setCode = rs.getString("setCode");
+			current.setNumber = rs.getString("setNumber");
+			current.setName = rs.getString("setName");
+			current.setRarity = rs.getString("setRarity");
+			current.colorVariant = rs.getString("setRarityColorVariant");
+			current.folderName = rs.getString("folderName");
+			current.condition = rs.getString("condition");
+			current.editionPrinting = rs.getString("editionPrinting");
+			current.dateBought = rs.getString("dateBought");
+			current.priceBought = Util.normalizePrice(rs.getString("priceBought"));
+			current.creationDate = rs.getString("creationDate");
+			current.modificationDate = rs.getString("modificationDate");
+			
+			current.priceLow = rs.getString("priceLow");
+			current.priceMid = rs.getString("priceMid");
+			current.priceMarket = rs.getString("priceMarket");
+			
+			current.UUID = rs.getString("UUID");
 
 			cardsInSetList.add(current);
 		}
@@ -342,13 +483,15 @@ public class SQLiteConnection {
 			current.condition = rs.getString("condition");
 			current.editionPrinting = rs.getString("editionPrinting");
 			current.dateBought = rs.getString("dateBought");
-			current.priceBought = rs.getString("priceBought");
+			current.priceBought = Util.normalizePrice(rs.getString("priceBought"));
 			current.creationDate = rs.getString("creationDate");
 			current.modificationDate = rs.getString("modificationDate");
 			
 			current.priceLow = rs.getString("priceLow");
 			current.priceMid = rs.getString("priceMid");
 			current.priceMarket = rs.getString("priceMarket");
+			
+			current.UUID = rs.getString("UUID");
 
 			String key = current.setNumber + current.priceBought + current.dateBought + current.folderName
 					+ current.condition + current.editionPrinting;
@@ -397,13 +540,15 @@ public class SQLiteConnection {
 			current.condition = rs.getString("condition");
 			current.editionPrinting = rs.getString("editionPrinting");
 			current.dateBought = rs.getString("dateBought");
-			current.priceBought = rs.getString("priceBought");
+			current.priceBought = Util.normalizePrice(rs.getString("priceBought"));
 			current.creationDate = rs.getString("creationDate");
 			current.modificationDate = rs.getString("modificationDate");
 			
 			current.priceLow = rs.getString("priceLow");
 			current.priceMid = rs.getString("priceMid");
 			current.priceMarket = rs.getString("priceMarket");
+			
+			current.UUID = rs.getString("UUID");
 
 			cardsInSetList.add(current);
 		}
@@ -438,14 +583,14 @@ public class SQLiteConnection {
 		return cardsInSetList;
 	}
 	
-	public static ArrayList<Integer> getDistinctCardIDsByArchetype(String setName) throws SQLException {
+	public static ArrayList<Integer> getDistinctCardIDsByArchetype(String archetype) throws SQLException {
 		Connection connection = SQLiteConnection.getInstance();
 
 		String setQuery = "select distinct wikiID from gamePlayCard where archetype = ?";
 
 		PreparedStatement setQueryStatement = connection.prepareStatement(setQuery);
 
-		setQueryStatement.setString(1, setName);
+		setQueryStatement.setString(1, archetype);
 
 		ResultSet rs = setQueryStatement.executeQuery();
 
@@ -576,7 +721,7 @@ public class SQLiteConnection {
 		return results;
 	}
 	
-	public static CardSet getCardSetForCardInSet(String cardName, String setName) throws SQLException {
+	public static CardSet getFirstCardSetForCardInSet(String cardName, String setName) throws SQLException {
 
 		Connection connection = SQLiteConnection.getInstance();
 
@@ -599,9 +744,8 @@ public class SQLiteConnection {
 			set.setName = rs.getString("setName");
 			set.setRarity = rs.getString("setRarity");
 			set.setPrice = rs.getString("setPrice");
+			break;
 		}
-		
-		//TODO handle multiple options
 
 		rs.close();
 		distrinctQueryStatement.close();
@@ -671,7 +815,7 @@ public class SQLiteConnection {
 		return setsList;
 	}
 
-	public static ArrayList<SetMetaData> getSetMetaDataFromSetData() throws SQLException {
+	public static ArrayList<SetMetaData> getAllSetMetaDataFromSetData() throws SQLException {
 
 		Connection connection = SQLiteConnection.getInstance();
 
@@ -830,28 +974,26 @@ public class SQLiteConnection {
 		
 	}
 
-	public static void replaceIntoGamePlayCard(Integer wikiID, String name, String type, Integer passcode, String desc,
-			String attribute, String race, Integer linkval, Integer level, Integer scale, Integer atk, Integer def,
-			String archetype) throws SQLException {
+	public static void replaceIntoGamePlayCard(GamePlayCard input) throws SQLException {
 		Connection connection = SQLiteConnection.getInstance();
 
 		String gamePlayCard = "Replace into gamePlayCard(wikiID,title,type,passcode,lore,attribute,race,linkValue,level,pendScale,atk,def,archetype) values(?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 		PreparedStatement statementgamePlayCard = connection.prepareStatement(gamePlayCard);
 
-		setIntegerOrNull(statementgamePlayCard, 1, wikiID);
-		setStringOrNull(statementgamePlayCard, 2, name);
-		setStringOrNull(statementgamePlayCard, 3, type);
-		setIntegerOrNull(statementgamePlayCard, 4, passcode);
-		setStringOrNull(statementgamePlayCard, 5, desc);
-		setStringOrNull(statementgamePlayCard, 6, attribute);
-		setStringOrNull(statementgamePlayCard, 7, race);
-		setIntegerOrNull(statementgamePlayCard, 8, linkval);
-		setIntegerOrNull(statementgamePlayCard, 9, level);
-		setIntegerOrNull(statementgamePlayCard, 10, scale);
-		setIntegerOrNull(statementgamePlayCard, 11, atk);
-		setIntegerOrNull(statementgamePlayCard, 12, def);
-		setStringOrNull(statementgamePlayCard, 13, archetype);
+		setIntegerOrNull(statementgamePlayCard, 1, input.wikiID);
+		setStringOrNull(statementgamePlayCard, 2, input.cardName);
+		setStringOrNull(statementgamePlayCard, 3, input.cardType);
+		setIntegerOrNull(statementgamePlayCard, 4, input.passcode);
+		setStringOrNull(statementgamePlayCard, 5, input.desc);
+		setStringOrNull(statementgamePlayCard, 6, input.attribute);
+		setStringOrNull(statementgamePlayCard, 7, input.race);
+		setStringOrNull(statementgamePlayCard, 8, input.linkval);
+		setStringOrNull(statementgamePlayCard, 9, input.level);
+		setStringOrNull(statementgamePlayCard, 10, input.scale);
+		setStringOrNull(statementgamePlayCard, 11, input.atk);
+		setStringOrNull(statementgamePlayCard, 12, input.def);
+		setStringOrNull(statementgamePlayCard, 13, input.archetype);
 
 		statementgamePlayCard.execute();
 
@@ -864,6 +1006,76 @@ public class SQLiteConnection {
 
 	private static int batchUpsertCurrentSize = 0;
 
+	public static void UpdateOwnedCardByUUID(OwnedCard card)
+			throws SQLException {
+		
+		int id = card.id;
+		String folder = card.folderName;
+		String name = card.cardName;
+		int quantity = card.quantity;
+		String setCode = card.setCode;
+		String condition = card.condition;
+		String printing = card.editionPrinting;
+		String priceBought = card.priceBought;
+		String dateBought = card.dateBought;
+		int rarityUnsure = card.rarityUnsure;
+		String colorVariant = card.colorVariant;
+		String setNumber = card.setNumber;
+		String setName = card.setName;
+		String setRarity = card.setRarity;
+		
+		String low = card.priceLow;
+		String mid = card.priceMid;
+		String market = card.priceMarket;
+		
+		String UUID = card.UUID;
+
+		Connection connection = SQLiteConnection.getInstance();
+
+		if (rarityUnsure != 1) {
+			rarityUnsure = 0;
+		}
+
+		if (colorVariant == null) {
+			colorVariant = Util.defaultColorVariant;
+		}
+
+		String normalizedPrice = Util.normalizePrice(priceBought);
+
+		String ownedInsert = "update ownedCards set wikiID = ?,folderName = ?,cardName = ?,quantity = ?,"
+				+ "setCode = ?, setNumber = ?,setName = ?,setRarity = ?,setRarityColorVariant = ?,"
+				+ "condition = ?,editionPrinting = ?,dateBought = ?,priceBought = ?,rarityUnsure = ?, "
+				+ "modificationDate = datetime('now','localtime'), priceLow = ?, priceMid = ?, priceMarket = ? "
+				+ "where UUID = ?";
+
+		PreparedStatement statement = connection.prepareStatement(ownedInsert);
+
+		statement.setInt(1, id);
+		statement.setString(2, folder);
+		statement.setString(3, name);
+		statement.setInt(4, quantity);
+		statement.setString(5, setCode);
+		statement.setString(6, setNumber);
+		statement.setString(7, setName);
+		statement.setString(8, setRarity);
+		statement.setString(9, colorVariant);
+		statement.setString(10, condition);
+		statement.setString(11, printing);
+		statement.setString(12, dateBought);
+		statement.setString(13, normalizedPrice);
+		statement.setInt(14, rarityUnsure);
+		
+		statement.setString(15, low);
+		statement.setString(16, mid);
+		statement.setString(17, market);
+		
+		statement.setString(18, UUID);
+		
+		statement.execute();
+		statement.close();
+
+	}
+	
 	public static void upsertOwnedCardBatch(OwnedCard card)
 			throws SQLException {
 		
@@ -885,6 +1097,8 @@ public class SQLiteConnection {
 		String low = card.priceLow;
 		String mid = card.priceMid;
 		String market = card.priceMarket;
+		
+		String UUID = card.UUID;
 
 		Connection connection = SQLiteConnection.getInstance();
 
@@ -900,12 +1114,13 @@ public class SQLiteConnection {
 
 		String ownedInsert = "insert into ownedCards(wikiID,folderName,cardName,quantity,setCode,"
 				+ "setNumber,setName,setRarity,setRarityColorVariant,condition,editionPrinting,dateBought"
-				+ ",priceBought,rarityUnsure, creationDate, modificationDate, priceLow, priceMid, priceMarket) "
+				+ ",priceBought,rarityUnsure, creationDate, modificationDate, priceLow, priceMid, priceMarket, UUID) "
 				+ "values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,"
-				+ "datetime('now','localtime'),datetime('now','localtime'),?,?,?)"
+				+ "datetime('now','localtime'),datetime('now','localtime'),?,?,?,?)"
 				+ "on conflict (wikiID,folderName,setNumber," + "condition,editionPrinting,dateBought,priceBought) "
 				+ "do update set quantity = ?, rarityUnsure = ?, setRarity = ?, setRarityColorVariant = ?, "
-				+ "modificationDate = datetime('now','localtime'), priceLow = ?, priceMid = ?, priceMarket = ?";
+				+ "modificationDate = datetime('now','localtime'), priceLow = ?, priceMid = ?, priceMarket = ?,"
+				+ "UUID = ?";
 
 		if (batchUpsertOwnedCard == null) {
 
@@ -931,16 +1146,20 @@ public class SQLiteConnection {
 		batchUpsertOwnedCard.setString(16, mid);
 		batchUpsertOwnedCard.setString(17, market);
 		
+		batchUpsertOwnedCard.setString(18, UUID);
+		
 		//conflict fields
 		
-		batchUpsertOwnedCard.setInt(18, Integer.valueOf(quantity));
-		batchUpsertOwnedCard.setInt(19, rarityUnsure);
-		batchUpsertOwnedCard.setString(20, setRarity);
-		batchUpsertOwnedCard.setString(21, colorVariant);
+		batchUpsertOwnedCard.setInt(19, Integer.valueOf(quantity));
+		batchUpsertOwnedCard.setInt(20, rarityUnsure);
+		batchUpsertOwnedCard.setString(21, setRarity);
+		batchUpsertOwnedCard.setString(22, colorVariant);
 		
-		batchUpsertOwnedCard.setString(22, low);
-		batchUpsertOwnedCard.setString(23, mid);
-		batchUpsertOwnedCard.setString(24, market);
+		batchUpsertOwnedCard.setString(23, low);
+		batchUpsertOwnedCard.setString(24, mid);
+		batchUpsertOwnedCard.setString(25, market);
+		
+		batchUpsertOwnedCard.setString(26, UUID);
 
 		batchUpsertOwnedCard.addBatch();
 		batchUpsertCurrentSize++;
@@ -949,47 +1168,6 @@ public class SQLiteConnection {
 			batchUpsertCurrentSize = 0;
 			batchUpsertOwnedCard.executeBatch();
 		}
-	}
-	
-	public static void updateFolderForOwnedCard(String folder, OwnedCard current)
-			throws SQLException {
-
-		Connection connection = SQLiteConnection.getInstance();
-
-		String ownedUpdate = "update ownedCards "
-				+ "set folderName = ? where wikiID = ? and folderName = ? and cardName = ? and quantity = ? and "
-				+ "setCode = ? and setNumber = ? and setName = ? and setRarity = ? and setRarityColorVariant = ? and "
-				+ "condition = ? and editionPrinting = ? and dateBought = ? and priceBought = ? and rarityUnsure = ?";
-		
-		PreparedStatement statement = connection.prepareStatement(ownedUpdate);
-		
-		String printing = null;
-		
-		if(current.editionPrinting.equals("Foil")) {
-			printing = "1st Edition";
-		}
-		else {
-			printing = current.editionPrinting;
-		}
-		
-		statement.setString(1, folder);
-		statement.setInt(2, current.id);
-		statement.setString(3, current.folderName);
-		statement.setString(4, current.cardName);
-		statement.setInt(5, current.quantity);
-		statement.setString(6, current.setCode);
-		statement.setString(7, current.setNumber);
-		statement.setString(8, current.setName);
-		statement.setString(9, current.setRarity);
-		statement.setString(10, current.colorVariant);
-		statement.setString(11, current.condition);
-		statement.setString(12, printing);
-		statement.setString(13, current.dateBought);
-		statement.setString(14, current.priceBought);
-		statement.setInt(15, current.rarityUnsure);
-
-		statement.execute();
-		statement.close();
 	}
 
 	public static void replaceIntoCardSet(String setNumber, String rarity, String setName, int wikiID, String price,
@@ -1045,6 +1223,63 @@ public class SQLiteConnection {
 
 		statementSetInsert.execute();
 		statementSetInsert.close();
+	}
+	
+	public static int updateCardSetPrice(String setNumber, String rarity, String price) throws SQLException {
+
+		Connection connection = SQLiteConnection.getInstance();
+
+		String update = "update cardSets set setPrice = ?, setPriceUpdateTime = datetime('now','localtime')"
+				+ " where setNumber = ? and setRarity = ?";
+
+		PreparedStatement statement = connection.prepareStatement(update);
+
+		statement.setString(1, price);
+		statement.setString(2, setNumber);
+		statement.setString(3, rarity);
+
+		statement.execute();
+		statement.close();
+		
+		String query = "select changes()";
+		
+		statement = connection.prepareStatement(query);
+		
+		ResultSet rs = statement.executeQuery();
+		
+		rs.next();
+		int updated = rs.getInt(1);
+		
+		return updated;
+		
+	}
+	
+	public static int updateCardSetPrice(String setNumber, String price) throws SQLException {
+
+		Connection connection = SQLiteConnection.getInstance();
+
+		String update = "update cardSets set setPrice = ?, setPriceUpdateTime = datetime('now','localtime')"
+				+ " where setNumber = ?";
+
+		PreparedStatement statement = connection.prepareStatement(update);
+
+		statement.setString(1, price);
+		statement.setString(2, setNumber);
+
+		statement.execute();
+		statement.close();
+		
+		String query = "select changes()";
+		
+		statement = connection.prepareStatement(query);
+		
+		ResultSet rs = statement.executeQuery();
+		
+		rs.next();
+		int updated = rs.getInt(1);
+		
+		return updated;
+		
 	}
 	
 	

@@ -55,6 +55,7 @@ public class ImportOwnedCardFromExportedCSV {
 						break;
 					} else {
 						// something to update
+						card.UUID = existingCard.UUID;
 						break;
 					}
 				}
