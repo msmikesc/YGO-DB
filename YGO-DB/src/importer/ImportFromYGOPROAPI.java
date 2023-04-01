@@ -29,7 +29,7 @@ public class ImportFromYGOPROAPI {
 
 	public void run() throws SQLException, IOException {
 
-		String setName = "Maze of Memories";
+		String setName = "Speed Duel Tournament Pack 5";
 
 		setName = setName.trim();
 

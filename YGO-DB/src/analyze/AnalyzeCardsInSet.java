@@ -37,7 +37,7 @@ public class AnalyzeCardsInSet {
 			setName = "HAC1;BLVO;SDFC;MAMA;SGX2;SDCB;MP22;TAMA;POTE;"
 					+ "LDS3;LED9;DIFO;GFP2;SDAZ;SGX1;BACH;GRCR;BROL;"
 					+ "MGED;BODE;LED8;SDCS;MP21;DAMA;KICO;EGO1;EGS1;"
-					+ "LIOV;ANGU;GEIM;SBCB;SDCH";
+					+ "LIOV;ANGU;GEIM;SBCB;SDCH;PHHY;DABL";
 			finalFileName = "Combined";
 		}
 

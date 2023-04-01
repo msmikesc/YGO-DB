@@ -30,18 +30,19 @@ public class AnalyzeData implements Comparable<AnalyzeData> {
 		if (compare != 0) {
 			return compare;
 		}
+		
+		compare = this.getStringOfSetNames().compareTo(o.getStringOfSetNames());
+
+		if (compare != 0) {
+			return compare;
+		}
 
 		compare = this.getStringOfRarities().compareTo(o.getStringOfRarities());
 
 		if (compare != 0) {
 			return compare;
 		}
-
-		compare = this.getStringOfSetNames().compareTo(o.getStringOfSetNames());
-
-		if (compare != 0) {
-			return compare;
-		}
+		
 
 		return cardName.compareTo(o.cardName);
 	}
