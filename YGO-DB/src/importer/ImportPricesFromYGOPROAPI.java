@@ -7,7 +7,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -18,6 +20,8 @@ import connection.SQLiteConnection;
 import connection.Util;
 
 public class ImportPricesFromYGOPROAPI {
+	
+	HashMap<String, List<String>> NameUpdateMap = new HashMap<String, List<String>>();
 
 	public static void main(String[] args) throws SQLException, IOException {
 		ImportPricesFromYGOPROAPI mainObj = new ImportPricesFromYGOPROAPI();
@@ -66,6 +70,8 @@ public class ImportPricesFromYGOPROAPI {
 				inline = null;
 
 				JSONArray cards = (JSONArray) jo.get("data");
+				
+				System.out.println("Getting data from API complete");
 
 				Iterator<Object> keyset = cards.iterator();
 
@@ -93,6 +99,18 @@ public class ImportPricesFromYGOPROAPI {
 					}
 
 				}
+				
+				List<String> namesList = new ArrayList<String>(NameUpdateMap.keySet());
+				
+				for(int i = 0; i < namesList.size(); i++) {
+					String setName = namesList.get(i);
+					System.out.println("Possibly need to handle set name issue count: " + NameUpdateMap.get(setName).size() + " " + setName );
+					/*
+					for(int j = 0; j < NameUpdateMap.get(setName).size(); j++) {
+						System.out.println(NameUpdateMap.get(setName).get(j));
+					}
+					*/
+				}
 
 			}
 		} catch (Exception e) {
@@ -100,9 +118,9 @@ public class ImportPricesFromYGOPROAPI {
 		}
 	}
 
-	public static void insertCardSetsForOneCard(JSONArray sets, Iterator<Object> setIteraor, String name, int wikiID)
+	public void insertCardSetsForOneCard(JSONArray sets, Iterator<Object> setIteraor, String name, int wikiID)
 			throws SQLException {
-
+		
 		for (int i = 0; i < sets.length(); i++) {
 
 			JSONObject currentSet = (JSONObject) setIteraor.next();
@@ -132,15 +150,30 @@ public class ImportPricesFromYGOPROAPI {
 			set_price = Util.normalizePrice(set_price);
 			
 			if(!set_price.equals("0.00")){
-				int updated = SQLiteConnection.updateCardSetPrice(set_code, set_rarity, set_price);
+				int updated = SQLiteConnection.updateCardSetPriceWithSetName(set_code, set_rarity, set_price, set_name);
 				
 				if(updated == 0) {
-					ArrayList<CardSet> list = SQLiteConnection.getAllCardSetsOfCardBySetNumber(set_code);
+				
+					updated = SQLiteConnection.updateCardSetPrice(set_code, set_rarity, set_price);
 					
-					if(list.size() == 1) {
-						updated = SQLiteConnection.updateCardSetPrice(set_code, set_price);
+					if(updated == 0) {
+						ArrayList<CardSet> list = SQLiteConnection.getAllCardSetsOfCardBySetNumber(set_code);
+						
+						if(list.size() == 1) {
+							updated = SQLiteConnection.updateCardSetPrice(set_code, set_price);
+						}
+						
 					}
-					
+					else {
+						
+						List<String> setNamesList = NameUpdateMap.get(set_name);
+						
+						if(setNamesList == null) {
+							setNamesList = new ArrayList<String>();
+							NameUpdateMap.put(set_name, setNamesList);
+						}
+						setNamesList.add(name);
+					}
 				}
 				
 				if(updated != 1) {

@@ -1193,36 +1193,51 @@ public class SQLiteConnection {
 	public static void updateSetName(String original, String newName) throws SQLException {
 
 		Connection connection = SQLiteConnection.getInstance();
-
+		
 		String setInsert = "update cardSets set setName = ? where setName = ?";
-
+		
 		PreparedStatement statementSetInsert = connection.prepareStatement(setInsert);
 
-		statementSetInsert.setString(1, newName);
-		statementSetInsert.setString(2, original);
-
-		statementSetInsert.execute();
-		statementSetInsert.close();
+		try {
+			statementSetInsert.setString(1, newName);
+			statementSetInsert.setString(2, original);
+	
+			statementSetInsert.execute();
+			statementSetInsert.close();
+		}
+		catch(Exception e) {
+			System.out.println("Unable to update cardSets for " + original);
+		}
 		
-		setInsert = "update ownedCards set setName = ? where setName = ?";
-
-		statementSetInsert = connection.prepareStatement(setInsert);
-
-		statementSetInsert.setString(1, newName);
-		statementSetInsert.setString(2, original);
-
-		statementSetInsert.execute();
-		statementSetInsert.close();
+		try {
+			setInsert = "update ownedCards set setName = ? where setName = ?";
+	
+			statementSetInsert = connection.prepareStatement(setInsert);
+	
+			statementSetInsert.setString(1, newName);
+			statementSetInsert.setString(2, original);
+	
+			statementSetInsert.execute();
+			statementSetInsert.close();
+		}
+		catch(Exception e) {
+			System.out.println("Unable to update ownedCards for " + original);
+		}
 		
-		setInsert = "update setData set setName = ? where setName = ?";
-
-		statementSetInsert = connection.prepareStatement(setInsert);
-
-		statementSetInsert.setString(1, newName);
-		statementSetInsert.setString(2, original);
-
-		statementSetInsert.execute();
-		statementSetInsert.close();
+		try {
+			setInsert = "update setData set setName = ? where setName = ?";
+	
+			statementSetInsert = connection.prepareStatement(setInsert);
+	
+			statementSetInsert.setString(1, newName);
+			statementSetInsert.setString(2, original);
+	
+			statementSetInsert.execute();
+			statementSetInsert.close();
+		}
+		catch(Exception e) {
+			System.out.println("Unable to update set data for " + original);
+		}
 	}
 	
 	public static int updateCardSetPrice(String setNumber, String rarity, String price) throws SQLException {
@@ -1237,6 +1252,36 @@ public class SQLiteConnection {
 		statement.setString(1, price);
 		statement.setString(2, setNumber);
 		statement.setString(3, rarity);
+
+		statement.execute();
+		statement.close();
+		
+		String query = "select changes()";
+		
+		statement = connection.prepareStatement(query);
+		
+		ResultSet rs = statement.executeQuery();
+		
+		rs.next();
+		int updated = rs.getInt(1);
+		
+		return updated;
+		
+	}
+	
+	public static int updateCardSetPriceWithSetName(String setNumber, String rarity, String price, String setName) throws SQLException {
+
+		Connection connection = SQLiteConnection.getInstance();
+
+		String update = "update cardSets set setPrice = ?, setPriceUpdateTime = datetime('now','localtime')"
+				+ " where setNumber = ? and setRarity = ? and setName = ?";
+
+		PreparedStatement statement = connection.prepareStatement(update);
+
+		statement.setString(1, price);
+		statement.setString(2, setNumber);
+		statement.setString(3, rarity);
+		statement.setString(4, setName);
 
 		statement.execute();
 		statement.close();

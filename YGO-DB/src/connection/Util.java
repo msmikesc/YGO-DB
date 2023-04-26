@@ -97,7 +97,64 @@ public class Util {
 			setNameMap.put("Duel Terminal 6b", "Duel Terminal 6");
 			setNameMap.put("Duel Terminal 7a", "Duel Terminal 7");
 			setNameMap.put("Duel Terminal 7b", "Duel Terminal 7");
-			
+			setNameMap.put("Legendary Collection 1", "Legendary Collection");
+			setNameMap.put("Advent Calendar 2019", "Yu-Gi-Oh! Advent Calendar (2019)");
+			setNameMap.put("Advent Calendar 2018", "Yu-Gi-Oh! Advent Calendar (2018)");
+			setNameMap.put("The Legend of Blue Eyes White Dragon", "Legend of Blue Eyes White Dragon");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
+			//setNameMap.put("", "");
 			//setNameMap.put("", "");
 			
 		}
@@ -112,10 +169,13 @@ public class Util {
 			rarityMap.put("Collectors Rare", "Collector's Rare");
 			rarityMap.put("URPR", "Ultra Rare (Pharaoh's Rare)");
 			rarityMap.put("Super Short Print", "Short Print");
+			rarityMap.put("SSP", "Short Print");
 			rarityMap.put("Duel Terminal Technology Common", "Duel Terminal Normal Parallel Rare");
 			rarityMap.put("Secret Pharaohâ€™s Rare", "Secret Rare (Pharaoh's Rare)");
 			rarityMap.put("Ultra Pharaohâ€™s Rare", "Ultra Rare (Pharaoh's Rare)");
 			rarityMap.put("Duel Terminal Technology Ultra Rare", "Duel Terminal Ultra Parallel Rare");
+			rarityMap.put("Ultra Pharaoh’s Rare", "Ultra Rare (Pharaoh's Rare)");
+			rarityMap.put("Secret Pharaoh’s Rare", "Secret Rare (Pharaoh's Rare)");
 			
 			//rarityMap.put("", "");
 			
@@ -140,6 +200,26 @@ public class Util {
 		
 		if(setName.contains("The Lost Art Promotion")) {
 			setName = "The Lost Art Promotion";
+		}
+		
+		if(setName.contains("(Worldwide English)")) {
+			setName = setName.replace("(Worldwide English)", "");
+			setName = setName.trim();
+		}
+		
+		if(setName.contains("Sneak Peek Participation Card")) {
+			setName = setName.replace("Sneak Peek Participation Card", "");
+			setName = setName.trim();
+		}
+		
+		if(setName.contains(": Special Edition")) {
+			setName = setName.replace(": Special Edition", "");
+			setName = setName.trim();
+		}
+		
+		if(setName.contains("Special Edition")) {
+			setName = setName.replace("Special Edition", "");
+			setName = setName.trim();
 		}
 		
 		setName = flipStructureEnding(setName, "Starter Deck");
