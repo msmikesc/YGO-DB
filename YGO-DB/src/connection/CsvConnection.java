@@ -483,7 +483,7 @@ public class CsvConnection {
 		}
 
 		if (wikiID == -1) {
-			System.out.println("Unable to find match for " + cardNumber + ":" + name);
+			System.out.println("Unable to find valid passcode for " + cardNumber + ":" + name);
 		}
 
 		String price = Util.getAdjustedPriceFromRarity(rarity, "0");
